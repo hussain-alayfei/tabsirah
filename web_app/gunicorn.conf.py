@@ -1,24 +1,27 @@
 # Gunicorn configuration for Render free tier
-# Optimized for low memory (512 MB)
+# Optimized for VERY low memory (512 MB, 0.1 CPU)
 
-# Worker settings
-workers = 1  # Single worker for low memory
+# Worker settings - minimal
+workers = 1
 worker_class = "sync"
 threads = 1
 
-# Timeout settings
-timeout = 120  # Allow longer time for prediction
-graceful_timeout = 30
-keepalive = 5
+# Timeout - shorter to prevent hanging
+timeout = 30
+graceful_timeout = 10
+keepalive = 2
 
-# Memory optimization
-max_requests = 100  # Restart worker after 100 requests to free memory
-max_requests_jitter = 20
+# Memory optimization - aggressive
+max_requests = 50  # Restart worker frequently to free memory
+max_requests_jitter = 10
+
+# Preload app to share memory
+preload_app = True
 
 # Logging
 accesslog = "-"
 errorlog = "-"
-loglevel = "info"
+loglevel = "warning"
 
 # Bind
 bind = "0.0.0.0:10000"

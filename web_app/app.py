@@ -153,11 +153,15 @@ def predict():
         if frame is None:
             return jsonify({'error': 'Failed to decode image', 'prediction': None, 'landmarks': []}), 200
 
-        # Resize image to reduce memory usage (max 640px width)
+        # Resize image aggressively to reduce memory usage (max 320px width)
         height, width = frame.shape[:2]
-        if width > 640:
-            scale = 640 / width
-            frame = cv2.resize(frame, (640, int(height * scale)))
+        if width > 320:
+            scale = 320 / width
+            frame = cv2.resize(frame, (320, int(height * scale)), interpolation=cv2.INTER_AREA)
+        
+        # Force garbage collection after processing
+        import gc
+        gc.collect()
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
