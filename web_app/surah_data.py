@@ -16,7 +16,7 @@ SURAHS = {
             'إن شانئك هو الأبتر'
         ],
         'unlocked': True,
-        'video_url': 'https://www.youtube.com/embed/dQw4w9WgXcQ',  # Placeholder
+        'video_url': 'https://www.youtube.com/embed/JvXeFXrOe-8',
         'description': 'سورة مكية، عدد آياتها 3'
     },
     'al-maun': {

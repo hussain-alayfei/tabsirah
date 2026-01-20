@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: tabsirah
-    runtime: python
-    pythonVersion: "3.11.10"
-    buildCommand: pip install -r requirements.txt
-    startCommand: cd web_app && gunicorn --config gunicorn.conf.py app:app
