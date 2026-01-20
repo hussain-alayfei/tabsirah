@@ -3,4 +3,4 @@ mediapipe
 scikit-learn
 flask
 gunicorn
-numpy<2
+numpy==1.26.4
