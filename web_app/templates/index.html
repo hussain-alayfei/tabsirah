@@ -625,7 +625,8 @@
                     <div class="text-xs text-slate-500 mb-2 font-bold text-center font-arabic"
                         style="font-family: 'Cairo', 'Noto Naskh Arabic', -apple-system, sans-serif;">الكلمة الحالية
                     </div>
-                    <div id="currentWordText" dir="rtl" class="text-4xl font-bold leading-relaxed text-center quran-text"
+                    <div id="currentWordText" dir="rtl"
+                        class="text-4xl font-bold leading-relaxed text-center quran-text"
                         style="font-family: 'Noto Naskh Arabic', 'Amiri', -apple-system, 'Geeza Pro', 'SF Arabic', system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; letter-spacing: 0;">
                         <!-- Word with colored letters will be inserted here -->
                     </div>
@@ -1400,7 +1401,7 @@
         function startCamera() {
             // Detect if mobile device
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            
+
             // Use different constraints for mobile vs desktop
             // Mobile: Request vertical resolution to match UI aspect ratio (9:16)
             // This prevents excessive cropping (zooming) when fitting a landscape video into a portrait container
@@ -1414,7 +1415,7 @@
                 height: { ideal: 720 },
                 frameRate: { ideal: 60 }
             };
-            
+
             navigator.mediaDevices.getUserMedia({
                 video: videoConstraints
             }).then((stream) => {
@@ -1972,9 +1973,9 @@
                 } else {
                     color = '#cbd5e1'; // slate-300
                 }
-                
+
                 html += `<span style="color: ${color}; transition: all 0.3s ease; margin: 0; padding: 0;">${word[i]}</span>`;
-                
+
                 // Add ZWJ (Zero Width Joiner) if this letter connects to the next one
                 // This forces the browser to connect the letters across the span boundary
                 if (i < word.length - 1 && !nonConnectors.includes(word[i])) {
