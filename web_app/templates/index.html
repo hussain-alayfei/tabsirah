@@ -2035,6 +2035,9 @@
                 ctx.rect(clipLeft, 0, clipRight - clipLeft, canvas.height / dpr);
                 ctx.clip();
                 
+                // Set the color for this section
+                ctx.fillStyle = section.color;
+                
                 // Draw the FULL word (clipping shows only this section)
                 ctx.fillText(word, centerX, centerY);
                 
