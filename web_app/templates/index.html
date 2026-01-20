@@ -620,32 +620,11 @@
                 </div>
 
                 <!-- Current Word Display (Centered, Big) - Always shown in Surah mode -->
-                <div id="currentWordDisplay" dir="rtl"
-                    class="hidden mb-3 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                    <div class="text-xs text-slate-500 mb-3 font-bold text-center"
-                        style="font-family: 'Cairo', -apple-system, sans-serif;">الكلمة الحالية</div>
-                    
-                    <!-- Arabic Word Display - Single text element for proper shaping -->
-                    <div class="text-center mb-3">
-                        <span id="currentWordTextArabic" dir="rtl" 
-                            class="text-4xl font-bold text-slate-700"
-                            style="font-family: 'Noto Naskh Arabic', 'Amiri', 'Geeza Pro', -apple-system, sans-serif; line-height: 1.8; letter-spacing: 0;">
-                            <!-- Word inserted here as SINGLE text - no splitting -->
-                        </span>
-                    </div>
-                    
-                    <!-- Progress indicator: Shows which letter we're on -->
-                    <div class="flex justify-center items-center gap-1" id="letterProgressDots">
-                        <!-- Dots will be inserted here by JavaScript -->
-                    </div>
-                    
-                    <!-- Current letter indicator -->
-                    <div class="text-center mt-3">
-                        <span class="text-xs text-slate-400">الحرف الحالي:</span>
-                        <span id="currentLetterDisplay" class="text-2xl font-bold text-blue-600 mr-2"
-                            style="font-family: 'Noto Naskh Arabic', 'Amiri', -apple-system, sans-serif;">
-                        </span>
-                    </div>
+                <div id="currentWordDisplay"
+                    class="hidden mb-3 text-center bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+                    <div class="text-[10px] text-slate-500 mb-1 font-semibold">الكلمة الحالية</div>
+                    <!-- Canvas for Arabic word with colored letters - keeps connections intact -->
+                    <canvas id="arabicWordCanvas" class="mx-auto" style="max-width: 100%;"></canvas>
                 </div>
 
                 <!-- Cards Track (Scrolling) - Hidden in Recitation Mode -->
@@ -1974,38 +1953,85 @@
             document.getElementById('currentWordDisplay').classList.remove('hidden');
 
             const wordIndex = parseInt(card.getAttribute('data-word-index') || '0');
-            // PROPER ARABIC DISPLAY: Show whole word as single text (keeps letters connected)
-            // Use progress dots and current letter indicator instead of per-letter coloring
-            // This is the ONLY way to guarantee proper Arabic shaping on iOS Safari and all mobile browsers
             
-            // Display the WHOLE word as single text - this guarantees proper Arabic shaping
-            const wordTextElement = document.getElementById('currentWordTextArabic');
-            wordTextElement.textContent = word;
+            // CANVAS APPROACH: Render Arabic word with colored letters while keeping connections
+            // Canvas draws the text as a bitmap, preserving Arabic shaping on ALL devices including iOS
+            const canvas = document.getElementById('arabicWordCanvas');
+            const ctx = canvas.getContext('2d');
             
-            // Display current letter separately (isolated form is OK for single letter display)
-            const currentLetterElement = document.getElementById('currentLetterDisplay');
-            currentLetterElement.textContent = word[wordIndex] || '';
+            // Set up canvas with high DPI for sharp text
+            const dpr = window.devicePixelRatio || 1;
+            const fontSize = 42;
+            const fontFamily = "'Noto Naskh Arabic', 'Geeza Pro', 'SF Arabic', -apple-system, sans-serif";
             
-            // Build progress dots to show which letter we're on
-            const dotsContainer = document.getElementById('letterProgressDots');
-            dotsContainer.innerHTML = '';
+            // Measure text width first
+            ctx.font = `bold ${fontSize}px ${fontFamily}`;
+            const textMetrics = ctx.measureText(word);
+            const textWidth = textMetrics.width;
+            
+            // Set canvas size
+            const padding = 20;
+            canvas.width = (textWidth + padding * 2) * dpr;
+            canvas.height = 70 * dpr;
+            canvas.style.width = (textWidth + padding * 2) + 'px';
+            canvas.style.height = '70px';
+            ctx.scale(dpr, dpr);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set text properties
+            ctx.font = `bold ${fontSize}px ${fontFamily}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.direction = 'rtl';
+            
+            // Calculate center position
+            const centerX = (textWidth + padding * 2) / 2;
+            const centerY = 35;
+            
+            // Draw the word multiple times with clipping to achieve per-letter coloring
+            // This keeps Arabic shaping intact because we draw the FULL word each time
+            
+            // Method: Draw full word 3 times, each with different clip region
+            // 1. First, measure approximate letter positions (RTL)
+            const letterWidths = [];
+            let totalWidth = 0;
+            for (let i = 0; i < word.length; i++) {
+                const w = ctx.measureText(word[i]).width;
+                letterWidths.push(w);
+                totalWidth += w;
+            }
+            
+            // Calculate starting X position (RTL - start from right)
+            const startX = centerX + totalWidth / 2;
+            
+            // Draw each section with clipping
+            let currentX = startX;
             
             for (let i = 0; i < word.length; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'w-3 h-3 rounded-full transition-all duration-300';
+                ctx.save();
                 
+                // Create clip region for this letter
+                const letterWidth = letterWidths[i];
+                ctx.beginPath();
+                ctx.rect(currentX - letterWidth - 2, 0, letterWidth + 4, canvas.height);
+                ctx.clip();
+                
+                // Set color based on progress
                 if (i < wordIndex) {
-                    // Completed - green
-                    dot.classList.add('bg-green-500');
+                    ctx.fillStyle = '#22c55e'; // green - completed
                 } else if (i === wordIndex) {
-                    // Current - blue, larger with ring
-                    dot.classList.add('bg-blue-500', 'w-4', 'h-4', 'ring-4', 'ring-blue-200');
+                    ctx.fillStyle = '#3b82f6'; // blue - current
                 } else {
-                    // Remaining - gray
-                    dot.classList.add('bg-slate-300');
+                    ctx.fillStyle = '#cbd5e1'; // gray - remaining
                 }
                 
-                dotsContainer.appendChild(dot);
+                // Draw the FULL word (clipping shows only this letter's portion)
+                ctx.fillText(word, centerX, centerY);
+                
+                ctx.restore();
+                currentX -= letterWidth;
             }
         }
 
