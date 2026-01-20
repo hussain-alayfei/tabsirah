@@ -55,7 +55,9 @@
         /* خط القرآن الكريم للنصوص القرآنية فقط */
         .font-quran,
         .quran-text {
-            font-family: 'Amiri', 'Arabic Typesetting', 'Traditional Arabic', serif !important;
+            font-family: 'Amiri', 'Geeza Pro', 'Baghdad', 'Damascus', 'Arabic Typesetting', 'Traditional Arabic', serif !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .glass-panel {
@@ -621,7 +623,7 @@
                     <div class="text-[10px] text-slate-500 mb-1 font-semibold tracking-wider uppercase">الكلمة الحالية
                     </div>
                     <div id="currentWordText" dir="rtl" class="text-4xl font-bold leading-relaxed quran-text"
-                        style="font-family: 'Amiri', serif;">
+                        style="font-family: 'Amiri', 'Geeza Pro', 'Baghdad', 'Damascus', 'Arabic Typesetting', 'Traditional Arabic', serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
                         <!-- Word with colored letters will be inserted here -->
                     </div>
                 </div>
@@ -1393,8 +1395,23 @@
         }
 
         function startCamera() {
+            // Detect if mobile device
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            // Use different constraints for mobile vs desktop
+            const videoConstraints = isMobile ? {
+                facingMode: "user",
+                width: { ideal: 1280, max: 1920 },
+                height: { ideal: 720, max: 1080 },
+                frameRate: { ideal: 30, max: 60 }
+            } : {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                frameRate: { ideal: 60 }
+            };
+            
             navigator.mediaDevices.getUserMedia({
-                video: { width: 1280, height: 720, frameRate: { ideal: 60 } }
+                video: videoConstraints
             }).then((stream) => {
                 video.srcObject = stream;
                 video.addEventListener("loadeddata", predictWebcam);
@@ -1938,7 +1955,7 @@
             const wordDisplay = document.getElementById('currentWordText');
 
             // Build word with colored spans - AS ONE CONNECTED WORD
-            let html = '<span dir="rtl" style="display: inline-block; font-family: \'Amiri\', \'Arabic Typesetting\', \'Traditional Arabic\', serif;">';
+            let html = '<span dir="rtl" style="display: inline-block; font-family: \'Amiri\', \'Geeza Pro\', \'Baghdad\', \'Damascus\', \'Arabic Typesetting\', \'Traditional Arabic\', serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">';
             for (let i = 0; i < word.length; i++) {
                 let color;
                 if (i < wordIndex) {
