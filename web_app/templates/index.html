@@ -1402,11 +1402,12 @@
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             
             // Use different constraints for mobile vs desktop
-            // Mobile: Use native resolution to avoid digital zoom, let CSS handle display
+            // Mobile: Request vertical resolution to match UI aspect ratio (9:16)
+            // This prevents excessive cropping (zooming) when fitting a landscape video into a portrait container
             const videoConstraints = isMobile ? {
                 facingMode: "user",
-                width: { ideal: 640 },
-                height: { ideal: 480 },
+                width: { ideal: 720 },
+                height: { ideal: 1280 }, // Request vertical orientation
                 frameRate: { ideal: 30 }
             } : {
                 width: { ideal: 1280 },
@@ -1959,8 +1960,9 @@
             const wordDisplay = document.getElementById('currentWordText');
 
             // Build word with colored spans - AS ONE CONNECTED WORD
-            // Using unicode-bidi and proper RTL to maintain Arabic letter connections
-            let html = '<span dir="rtl" style="display: inline-block; unicode-bidi: bidi-override; font-family: \'Noto Naskh Arabic\', \'Amiri\', -apple-system, \'Geeza Pro\', \'SF Arabic\', system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; letter-spacing: 0;">';
+            const nonConnectors = "اأإآدذرزوؤةى";
+            // Remove bidi-override, keep dir="rtl" and robust font stack
+            let html = '<span dir="rtl" style="display: inline-block; font-family: \'Noto Naskh Arabic\', \'Amiri\', -apple-system, \'Geeza Pro\', \'SF Arabic\', system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; letter-spacing: 0;">';
             for (let i = 0; i < word.length; i++) {
                 let color;
                 if (i < wordIndex) {
@@ -1970,8 +1972,14 @@
                 } else {
                     color = '#cbd5e1'; // slate-300
                 }
-                // IMPORTANT: No spaces between letters - Arabic will connect naturally
-                html += `<span style="color: ${color}; transition: all 0.3s ease; letter-spacing: 0;">${word[i]}</span>`;
+                
+                html += `<span style="color: ${color}; transition: all 0.3s ease; margin: 0; padding: 0;">${word[i]}</span>`;
+                
+                // Add ZWJ (Zero Width Joiner) if this letter connects to the next one
+                // This forces the browser to connect the letters across the span boundary
+                if (i < word.length - 1 && !nonConnectors.includes(word[i])) {
+                    html += "&zwj;";
+                }
             }
             html += '</span>';
 
