@@ -1,19 +1,19 @@
-# Gunicorn configuration for Render free tier
-# Optimized for VERY low memory (512 MB, 0.1 CPU)
+# Gunicorn configuration for Railway
+# Optimized for Railway's resources
 
-# Worker settings - minimal
+# Worker settings
 workers = 1
 worker_class = "sync"
-threads = 1
+threads = 2
 
-# Timeout - shorter to prevent hanging
-timeout = 30
-graceful_timeout = 10
-keepalive = 2
+# Timeout
+timeout = 120
+graceful_timeout = 30
+keepalive = 5
 
-# Memory optimization - aggressive
-max_requests = 50  # Restart worker frequently to free memory
-max_requests_jitter = 10
+# Memory optimization
+max_requests = 100
+max_requests_jitter = 20
 
 # Preload app to share memory
 preload_app = True
@@ -21,7 +21,6 @@ preload_app = True
 # Logging
 accesslog = "-"
 errorlog = "-"
-loglevel = "warning"
+loglevel = "info"
 
-# Bind
-bind = "0.0.0.0:10000"
+# Note: bind is set via command line --bind 0.0.0.0:$PORT in Procfile
