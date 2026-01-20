@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dataset (too large for Git - keep models, exclude raw images)
+dataset/Lettres_sign_ar/
+
+# Processed data (can be regenerated)
+data_processed/
+
+# Logs
+*.log
+
+# NOTE: models/ folder is NOT ignored - it's needed for deployment
+# NOTE: web_app/static/signs/ is NOT ignored - sign images are needed

@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تطبيق تبصرة</title>
+
+    <!-- FONTS: Zain (Main Arabic) + Amiri (Quranic Text Only) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Amiri:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- TAILWIND CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'Tahoma', 'Arial', 'sans-serif'],
+                        arabic: ['Cairo', 'Tahoma', 'Arial', 'sans-serif'],
+                        quran: ['Amiri', 'Arabic Typesetting', 'Traditional Arabic', 'serif'],
+                    },
+                    colors: {
+                        tabsira: {
+                            light: '#3b82f6', // Light Blue
+                            dark: '#1d4ed8',  // Dark Blue
+                            cyan: '#0ea5e9',  // Cyan
+                            navy: '#1e3a8a',  // Navy
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* تطبيق الخط العربي الرئيسي (Cairo/ZAIN) على الموقع */
+        * {
+            font-family: 'Cairo', 'Tahoma', 'Arial', sans-serif !important;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #1e293b;
+            font-family: 'Cairo', 'Tahoma', 'Arial', sans-serif !important;
+        }
+
+        /* خط القرآن الكريم للنصوص القرآنية فقط */
+        .font-quran,
+        .quran-text {
+            font-family: 'Amiri', 'Arabic Typesetting', 'Traditional Arabic', serif !important;
+        }
+
+        .glass-panel {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        #videoElement {
+            /* transform: scaleX(-1); MOVED TO INLINE CLASS */
+            /* object-fit: cover; Ensured via utility class */
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Smooth fade transition */
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        /* Entry Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .stagger-1 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .stagger-2 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .stagger-3 {
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .stagger-4 {
+            animation-delay: 0.4s;
+            opacity: 0;
+        }
+
+        /* View Switching Animation */
+        .view-transition {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .view-hidden {
+            opacity: 0;
+            transform: scale(0.98);
+            pointer-events: none;
+        }
+
+        .view-visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+
+<body class="font-arabic h-screen w-screen overflow-hidden selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- LANDING PAGE VIEW -->
+    <div id="landingView"
+        class="w-full h-full flex flex-col relative bg-white overflow-hidden view-transition view-visible">
+
+        <!-- Top Decorative Background -->
+        <div class="absolute top-0 left-0 right-0 h-64 overflow-hidden pointer-events-none">
+            <div class="absolute -top-24 -left-24 w-64 h-64 bg-cyan-100/50 rounded-full blur-3xl"></div>
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl"></div>
+        </div>
+
+        <!-- Scrollable Content Area -->
+        <div class="flex-1 overflow-y-auto pb-32">
+            <div class="w-full max-w-4xl mx-auto px-6 pt-12 flex flex-col min-h-full">
+
+                <!-- Header / Logo Area -->
+                <div class="flex flex-col items-center justify-center text-center mb-10 animate-fade-in-up stagger-1">
+                    <!-- Logo Icon -->
+                    <div class="w-24 h-24 mb-4 text-[#617ED2] flex items-center justify-center relative">
+                        <!-- Book Logo SVG -->
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                            class="drop-shadow-xl text-[#617ED2]">
+                            <path
+                                d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+
+                    <h1 class="text-3xl font-black text-[#2C3E50] tracking-wide mb-1 font-arabic">تطبيق تبصرة</h1>
+                    <p class="text-slate-500 text-sm font-bold font-arabic">للحفظ المتقن للقرآن الكريم</p>
+                </div>
+
+                <!-- Learning Paths Section -->
+                <div class="w-full animate-fade-in-up stagger-2">
+                    <h2 class="text-xl font-black text-slate-800 mb-6 px-1 text-right font-arabic">مسارات التعلم</h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- Card 1: Practice Reading (Surah Training) -->
+                        <button onclick="selectTrainingMode()"
+                            class="group relative w-full h-40 rounded-3xl overflow-hidden shadow-lg shadow-[#3CA1D3]/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95 text-right">
+                            <!-- Gradient Background -->
+                            <div class="absolute inset-0 bg-gradient-to-l from-[#3CA1D3] to-[#0284CA]"></div>
+
+                            <div class="absolute inset-0 flex items-center justify-between px-6 z-10">
+                                <!-- Text Content -->
+                                <div class="flex-1 pl-4">
+                                    <h3 class="text-2xl font-black text-white mb-2 font-arabic">تدرب على القراءة</h3>
+                                    <p class="text-cyan-50 text-xs font-bold font-arabic opacity-90 leading-relaxed">
+                                        تعلم القرآن بطلاقة الإشارة</p>
+                                </div>
+
+                                <!-- Icon Box -->
+                                <div
+                                    class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shrink-0 transition-transform group-hover:scale-110 duration-500">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 19.477 5.754 19 7.5 19s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 19.477 18.247 19 16.5 19c-1.746 0-3.332.477-4.5 1.253">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Card 2: Practice Reciting (Free Practice/AI) -->
+                        <button onclick="selectFreePracticeMode()"
+                            class="group relative w-full h-40 rounded-3xl overflow-hidden shadow-lg shadow-[#4A6BB7]/20 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl active:scale-95 text-right">
+                            <!-- Gradient Background -->
+                            <div class="absolute inset-0 bg-gradient-to-l from-[#4A6BB7] to-[#2C3E50]"></div>
+
+                            <div class="absolute inset-0 flex items-center justify-between px-6 z-10">
+                                <!-- Text Content -->
+                                <div class="flex-1 pl-4">
+                                    <h3 class="text-2xl font-black text-white mb-2 font-arabic">تدرب على التسميع</h3>
+                                    <p class="text-blue-100 text-xs font-bold font-arabic opacity-90 leading-relaxed">
+                                        تدرب على حفظ القرآن بطلاقة الإشارة</p>
+                                </div>
+
+                                <!-- Icon Box -->
+                                <div
+                                    class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shrink-0 transition-transform group-hover:scale-110 duration-500">
+                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav
+            class="fixed bottom-0 left-0 right-0 mx-auto w-full bg-white rounded-t-[2.5rem] shadow-[0_-10px_40px_-5px_rgba(0,0,0,0.1)] py-2 px-6 flex justify-between items-center z-50 h-24 max-w-4xl animate-fade-in-up stagger-3">
+
+            <!-- Home Button (Active - Right/Start) -->
+            <button class="flex flex-col items-center gap-1.5 w-20 group">
+                <div class="p-1.5 rounded-xl text-[#617ED2] bg-blue-50 transition-colors">
+                    <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C16.97 2 21 6.04 21 11.03V22H15V16.03H9V22H3V11.03C3 6.04 7.03 2 12 2Z" />
+                    </svg>
+                </div>
+                <span class="text-xs font-bold text-[#617ED2] font-arabic">الرئيسية</span>
+            </button>
+
+            <!-- Center Logo Button (Floating) -->
+            <div class="relative -top-8">
+                <button
+                    class="w-20 h-20 bg-white rounded-full flex items-center justify-center p-2 shadow-2xl shadow-[#617ED2]/30 transform hover:scale-105 transition-all duration-300">
+                    <div
+                        class="w-full h-full bg-gradient-to-br from-[#617ED2] to-[#4A6BB7] rounded-full flex items-center justify-center text-white shadow-inner border-4 border-white">
+                        <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 19.477 5.754 19 7.5 19s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 19.477 18.247 19 16.5 19c-1.746 0-3.332.477-4.5 1.253">
+                            </path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+
+            <!-- History Button (Inactive - Left/End) -->
+            <button class="flex flex-col items-center gap-1.5 w-20 group">
+                <div
+                    class="p-1.5 rounded-xl text-slate-400 group-hover:text-[#617ED2] group-hover:bg-blue-50 transition-colors">
+                    <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M14 2H6C4.9 2 4.01 2.9 4.01 4L4 20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM16 18H8V16H16V18ZM16 14H8V12H16V14ZM13 9V3.5L18.5 9H13Z" />
+                    </svg>
+                </div>
+                <span class="text-xs font-bold text-slate-400 group-hover:text-[#617ED2] font-arabic">السجل</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- SURAH SELECTION VIEW -->
+    <div id="surahSelectionView" class="fixed inset-0 z-[100] w-full h-full bg-white hidden flex-col overflow-y-auto">
+        <!-- Header -->
+        <header
+            class="bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between z-40 sticky top-0">
+            <button onclick="backToLanding()" class="p-2 rounded-full hover:bg-slate-100 text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <h1 class="text-lg font-bold text-slate-800">اختر السورة للتدريب</h1>
+            <div class="w-10"></div>
+        </header>
+
+        <!-- Surah List -->
+        <main class="flex-1 px-4 pb-4">
+            <!-- Search Bar -->
+            <div class="mb-6 relative">
+                <input type="text" placeholder="بحث..."
+                    class="w-full bg-slate-50 border-none rounded-2xl py-4 pr-12 pl-12 text-right font-arabic text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-sm">
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- List Container -->
+            <div id="surahGrid"
+                class="flex flex-col bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                <!-- Will be populated dynamically -->
+            </div>
+        </main>
+    </div>
+
+    <!-- VIDEO CHOICE VIEW -->
+    <div id="videoChoiceView"
+        class="fixed inset-0 z-[110] w-full h-full bg-white hidden flex items-center justify-center p-6 view-transition">
+
+        <!-- Background Decoration -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div
+                class="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-64 h-64 bg-cyan-50 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2">
+            </div>
+        </div>
+
+        <div
+            class="max-w-sm w-full bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 p-8 text-center relative z-10 border border-slate-50 animate-fade-in-up">
+            <!-- Surah Badge -->
+            <div class="inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-6">
+                <span class="text-blue-600">📖</span>
+                <span class="text-blue-900 font-black font-arabic text-sm" id="videoChoiceTitle">سورة الكوثر</span>
+            </div>
+
+            <!-- Question -->
+            <h2 class="text-xl font-black text-slate-800 mb-3 font-arabic">كيف تود البدء؟</h2>
+            <p class="text-slate-500 text-sm font-bold font-arabic mb-8">اختر الطريقة التي تفضلها للتعلم</p>
+
+            <!-- Choice Cards (Buttons) -->
+            <div class="grid grid-cols-1 gap-3">
+                <!-- Option 1: Watch Video (YouTube Style) -->
+                <button onclick="showVideoPlayer()"
+                    class="group relative w-full h-20 rounded-2xl overflow-hidden shadow-lg shadow-red-500/10 transition-transform active:scale-95 text-right">
+                    <!-- Gradient Background -->
+                    <div class="absolute inset-0 bg-gradient-to-l from-red-500 to-rose-600"></div>
+
+                    <div class="absolute inset-0 flex items-center justify-between px-5 z-10">
+                        <!-- Text Content -->
+                        <div class="flex-1 pl-3">
+                            <h3 class="text-lg font-black text-white mb-1 font-arabic">مشاهدة الشرح</h3>
+                            <p class="text-red-100 text-[10px] font-bold font-arabic opacity-90">تعلم الإشارات من المعلم
+                            </p>
+                        </div>
+
+                        <!-- Icon Box -->
+                        <div
+                            class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/10 shrink-0 transition-transform group-hover:scale-110 duration-500">
+                            <!-- YouTube Play Icon -->
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- Option 2: Direct Training (Practice Style - Green/Teal) -->
+                <button onclick="startDirectTraining()"
+                    class="group relative w-full h-20 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/10 transition-transform active:scale-95 text-right">
+                    <!-- Gradient Background -->
+                    <div class="absolute inset-0 bg-gradient-to-l from-teal-500 to-emerald-600"></div>
+
+                    <div class="absolute inset-0 flex items-center justify-between px-5 z-10">
+                        <!-- Text Content -->
+                        <div class="flex-1 pl-3">
+                            <h3 class="text-lg font-black text-white mb-1 font-arabic">بدء التدريب</h3>
+                            <p class="text-teal-100 text-[10px] font-bold font-arabic opacity-90">اختبر نفسك مباشرة
+                                بالذكاء الاصطناعي</p>
+                        </div>
+
+                        <!-- Icon Box -->
+                        <div
+                            class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/10 shrink-0 transition-transform group-hover:scale-110 duration-500">
+                            <!-- Practice/Brain Icon -->
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Cancel Button -->
+            <button onclick="backToSurahSelection()"
+                class="mt-8 text-slate-400 hover:text-slate-600 text-sm font-bold font-arabic transition-colors">
+                إلغاء والعودة
+            </button>
+        </div>
+    </div>
+
+    <!-- VIDEO PLAYER VIEW -->
+    <div id="videoPlayerView" class="fixed inset-0 z-[100] w-full h-full bg-white hidden flex-col">
+        <!-- Header -->
+        <header
+            class="bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between z-40">
+            <button onclick="backToVideoChoice()" class="p-2 rounded-full hover:bg-slate-100 text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <h1 class="text-lg font-bold text-slate-800" id="videoPlayerTitle">الشرح التعليمي</h1>
+            <div class="w-10"></div>
+        </header>
+
+        <!-- Video Container -->
+        <main class="flex-1 flex flex-col items-center justify-center p-4 bg-slate-50">
+            <div class="w-full max-w-3xl">
+                <div class="relative w-full" style="padding-bottom: 56.25%;">
+                    <iframe id="youtubePlayer" class="absolute top-0 left-0 w-full h-full rounded-xl shadow-2xl"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="startTrainingAfterVideo()"
+                        class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg">
+                        بدء التدريب الآن
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- CONGRATS OVERLAY (Between verses) - Simple, no animation -->
+    <div id="congratsOverlay"
+        class="fixed inset-0 z-[200] bg-green-500/90 backdrop-blur-sm hidden flex items-center justify-center">
+        <div class="text-center text-white">
+            <div class="text-5xl mb-2">✓</div>
+            <div class="text-2xl font-bold">أحسنت!</div>
+        </div>
+    </div>
+
+    <!-- CORRECTION OVERLAY (Recitation Mode - After max errors) -->
+    <div id="correctionOverlay"
+        class="fixed inset-0 z-[210] bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-6">
+        <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full text-center shadow-2xl animate-fade-in-up">
+            <!-- Error Badge -->
+            <div class="inline-flex items-center gap-2 bg-red-50 px-4 py-2 rounded-full mb-4">
+                <span class="text-red-500">⚠️</span>
+                <span id="errorCountBadge" class="text-red-700 font-bold font-arabic text-sm">حاولت 10 مرات</span>
+            </div>
+
+            <h2 class="text-xl font-black text-slate-800 mb-6 font-arabic">الإشارة الصحيحة هي:</h2>
+
+            <!-- Correct Sign Image -->
+            <div class="bg-slate-50 rounded-2xl p-6 mb-6 border-2 border-slate-100">
+                <img id="correctSignImage" src="" alt="الإشارة الصحيحة" class="w-40 h-40 mx-auto object-contain mb-4" />
+                <div id="correctLetterDisplay" class="text-5xl font-black text-blue-600 quran-text"></div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="skipLetter()"
+                    class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold font-arabic hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg">
+                    فهمت، أكمل التسميع
+                </button>
+                <button onclick="retryLetter()"
+                    class="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-bold font-arabic hover:bg-slate-200 transition-all">
+                    أعد المحاولة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP VIEW (Hidden by default) -->
+    <div id="appView" class="fixed inset-0 z-[100] w-full h-full bg-white hidden flex-col">
+
+        <!-- App Header -->
+        <header
+            class="bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between z-40 sticky top-0">
+            <button onclick="closeApp()" class="p-2 rounded-full hover:bg-slate-100 text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <h1 class="text-lg font-bold text-slate-800">التدريب المباشر</h1>
+            <!-- Restart Button Removed -->
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 max-w-2xl mx-auto w-full">
+
+            <!-- Video Stage - Vertical Large -->
+            <section
+                class="relative w-full max-w-xl mx-auto aspect-[9/16] bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/10 border-4 border-white">
+                <div id="cameraWrapper" class="absolute inset-0 w-full h-full bg-black">
+                    <video id="videoElement" autoplay playsinline
+                        class="w-full h-full object-cover transform -scale-x-100"></video>
+                    <canvas id="overlayCanvas"
+                        class="absolute top-0 left-0 w-full h-full pointer-events-none transform -scale-x-100 object-cover"></canvas>
+                </div>
+
+                <!-- Prediction Badge -->
+                <div id="predBadge"
+                    class="absolute top-4 right-4 z-30 bg-white/90 backdrop-blur rounded-xl p-3 shadow-lg border border-white/20 min-w-[80px] flex flex-col items-center justify-center">
+                    <div class="text-[10px] text-slate-500 font-bold font-arabic mb-1 text-center">
+                        الإشارة</div>
+                    <div id="predVal" class="text-5xl font-black text-blue-600 text-center leading-none quran-text">-
+                    </div>
+                </div>
+
+                <!-- Letter Error Counter (Recitation Mode) -->
+                <div id="letterErrorCounter"
+                    class="hidden absolute top-4 left-4 z-30 bg-red-50/95 backdrop-blur rounded-lg px-3 py-2 shadow-lg border border-red-200">
+                    <div class="text-[10px] text-red-600 font-bold font-arabic mb-0.5 text-center">
+                        أخطاء</div>
+                    <div id="letterErrorCount"
+                        class="text-xl font-black text-red-600 text-center leading-none font-sans">
+                        0/10
+                    </div>
+                </div>
+
+                <!-- Score (Training Mode) -->
+                <div id="scoreDisplay"
+                    class="absolute top-4 left-4 z-30 flex items-center gap-2 bg-slate-900/50 backdrop-blur text-white px-3 py-1.5 rounded-full">
+                    <span class="text-xs">⭐️</span>
+                    <span id="scoreValue" class="font-bold font-sans">0</span>
+                </div>
+
+                <!-- Verse Progress (Recitation Mode) -->
+                <div id="verseProgressDisplay"
+                    class="hidden absolute bottom-4 left-4 right-4 z-30 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-slate-500 font-bold font-arabic">تقدم الآيات</span>
+                        <span id="verseProgressText" class="text-sm font-black text-blue-600 font-arabic">آية 1 من
+                            3</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div id="verseProgressBar"
+                            class="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500 rounded-full"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Success Flash Animation Overlay -->
+                <div id="successFlash" class="absolute inset-0 z-40 pointer-events-none hidden">
+                    <div class="absolute inset-0 bg-green-500/30 animate-pulse"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-8xl animate-bounce">✓</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Input & Cards -->
+            <section class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                <!-- Free Practice Input (Hidden in Surah Mode) -->
+                <div id="freePracticeInput" class="flex items-center gap-3 mb-3">
+                    <input type="text" id="gameInput" placeholder="اكتب جملة للتدريب..."
+                        class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-right text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-arabic"
+                        dir="rtl">
+                    <button onclick="startGame()"
+                        class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Current Word Display (Centered, Big) - Always shown in Surah mode -->
+                <div id="currentWordDisplay"
+                    class="hidden mb-3 text-center bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+                    <div class="text-[10px] text-slate-500 mb-1 font-semibold tracking-wider uppercase">الكلمة الحالية
+                    </div>
+                    <div id="currentWordText" dir="rtl" class="text-4xl font-bold leading-relaxed quran-text"
+                        style="font-family: 'Amiri', serif;">
+                        <!-- Word with colored letters will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Cards Track (Scrolling) - Hidden in Recitation Mode -->
+                <div id="cardsTrack" dir="rtl"
+                    class="flex flex-row items-center gap-2 overflow-x-auto py-6 px-4 hide-scrollbar min-h-[180px]">
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- SUMMARY OVERLAY - Ask for Analytics -->
+    <div id="summaryOverlay"
+        class="fixed inset-0 z-[150] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+            class="bg-white w-full max-w-lg rounded-[2rem] p-8 text-center shadow-2xl transform transition-all scale-100">
+            <div class="text-6xl mb-4">🎉</div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2 font-arabic">أحسنت!</h3>
+            <p class="text-slate-500 mb-4 font-arabic">لقد أكملت التدريب بنجاح</p>
+
+            <!-- Full Sentence Display -->
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 mb-6 border-2 border-green-200">
+                <div class="text-xs text-green-700 font-semibold mb-3 uppercase tracking-wider">الجملة المكتملة</div>
+                <div id="completedSentence" dir="rtl"
+                    class="text-4xl font-bold text-green-700 leading-relaxed quran-text">
+                    <!-- Completed sentence will be inserted here -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-50 rounded-2xl p-4">
+                    <div class="text-2xl font-black text-blue-600" id="sumScore">0</div>
+                    <div class="text-xs text-slate-500 font-arabic">النقاط</div>
+                </div>
+                <div class="bg-cyan-50 rounded-2xl p-4">
+                    <div class="text-2xl font-black text-cyan-600" id="sumTime">0s</div>
+                    <div class="text-xs text-slate-500 font-arabic">الوقت</div>
+                </div>
+            </div>
+
+            <!-- Ask for analytics -->
+            <div class="bg-blue-50 rounded-2xl p-6 mb-6 border-2 border-blue-200">
+                <p class="text-blue-900 font-bold mb-3 font-arabic text-lg">هل تريد رؤية تحليل مفصل لأدائك؟</p>
+                <p class="text-blue-700 text-sm font-arabic">سنعرض لك إحصائيات دقيقة عن أدائك</p>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="showAnalytics()"
+                    class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg font-arabic">
+                    نعم، أرني النتيجة
+                </button>
+                <div class="space-y-3" id="summaryButtons">
+                    <div class="flex gap-3">
+                        <button onclick="closeSummary(); restartGame();"
+                            class="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all font-arabic">
+                            تدريب جديد
+                        </button>
+                        <button onclick="closeSummary()"
+                            class="flex-1 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all font-arabic">
+                            إغلاق
+                        </button>
+                    </div>
+                    <!-- Practice Errors button (Recitation Mode - hidden by default) -->
+                    <button id="practiceErrorsBtn" onclick="startPracticeErrors()"
+                        class="hidden w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold hover:from-orange-600 hover:to-red-600 transition-all font-arabic mt-3">
+                        <span>تدرب على الأخطاء</span>
+                    </button>
+                    <!-- Surah-specific button (hidden by default) -->
+                    <button id="backToSurahSelectionBtn" onclick="backToSurahSelectionFromResults()"
+                        class="hidden w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all font-arabic mt-2">
+                        اختر سورة أخرى
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay"
+        class="fixed inset-0 z-[160] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] p-12 text-center shadow-2xl">
+            <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-6">
+            </div>
+            <p class="text-xl font-bold text-slate-800 font-arabic">جاري التحليل...</p>
+            <p class="text-sm text-slate-500 mt-2 font-arabic">نقوم بتحليل أدائك بدقة</p>
+        </div>
+    </div>
+
+    <!-- ANALYTICS OVERLAY -->
+    <div id="analyticsOverlay"
+        class="fixed inset-0 z-[170] hidden bg-gradient-to-br from-slate-900 to-slate-800 overflow-y-auto">
+        <div class="min-h-screen py-8 px-4">
+            <div class="max-w-4xl mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-black text-white mb-2 font-arabic">📊 تحليل الأداء</h1>
+                    <p class="text-slate-300 font-arabic">تقرير مفصل عن جلستك التدريبية</p>
+                </div>
+
+                <!-- Analytics Content -->
+                <div id="analyticsContent" class="space-y-6">
+                    <!-- Will be filled by JavaScript -->
+                </div>
+
+                <!-- Close Button -->
+                <div class="text-center mt-8 flex gap-4 justify-center">
+                    <button onclick="closeAnalytics(); restartGame();"
+                        class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg font-arabic">
+                        تدريب جديد
+                    </button>
+                    <button onclick="closeAnalytics()"
+                        class="px-8 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg font-arabic">
+                        إغلاق
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { FilesetResolver, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+        // ============================================
+        // STATE
+        // ============================================
+        let handLandmarker = undefined;
+        let runningMode = "VIDEO";
+
+        // DOM
+        const video = document.getElementById("videoElement");
+        const overlay = document.getElementById("overlayCanvas");
+        const ctx = overlay.getContext("2d");
+        const predVal = document.getElementById("predVal");
+
+        // Game Props
+        let lastVideoTime = -1;
+        let lastPredictionTime = 0;
+        const PREDICTION_INTERVAL = 150;
+
+        let targetSentence = "";
+        let currentTargetIndex = 0;
+        let score = 0;
+        let startTime = 0;
+        let gameActive = false;
+        let pauseDetection = false; // NEW: Pause flag
+
+        // Consecutive correct detections required before advancing
+        let consecutiveCorrect = 0;
+        const REQUIRED_CONSECUTIVE = 3; // Must detect correctly 3 times in a row
+
+        // Track last wrong prediction to avoid counting repetitive same-letter errors
+        let lastWrongPrediction = null;
+
+        // Analytics tracking
+        let mistakes = []; // Array of {letter: 'ب', attempts: 3, timestamp: ...}
+        let letterStats = {}; // {letter: {correct: 0, wrong: 0, totalTime: 0}}
+        let currentLetterStartTime = 0;
+        let totalAttempts = 0;
+
+        // ============================================
+        // RECITATION MODE STATE (التسميع)
+        // ============================================
+        let recitationMode = false; // Flag to differentiate recitation from training
+        let letterErrorCount = {}; // Track errors per letter position {0: 2, 1: 0, ...}
+        let verseErrorCounts = []; // Track error percentage per verse [{verse: '...', errorRate: 25}, ...]
+        let failedVerses = []; // Verses with >30% error rate (for practice errors feature)
+        let verseResults = []; // Track each verse result {verse: '...', correct: true/false, errors: 5, total: 20}
+        const MAX_ATTEMPTS_PER_LETTER = 10; // Threshold before showing skip option (10 attempts per letter)
+        const VERSE_FAILURE_THRESHOLD = 40; // Percentage - if errors > 40% of letters, verse is "failed"
+
+        // View Transition
+        window.openApp = function () {
+            const landing = document.getElementById('landingView');
+            const app = document.getElementById('appView');
+
+            landing.style.display = 'none';
+            app.style.display = 'flex';
+            app.classList.remove('hidden'); // Ensure flex takes over
+
+            // Start Camera only when opening app
+            if (!video.srcObject) {
+                initAI();
+            }
+        }
+
+        window.closeApp = function () {
+            const landing = document.getElementById('landingView');
+            const app = document.getElementById('appView');
+
+            app.style.display = 'none';
+            landing.style.display = 'flex';
+
+            // Reset surah mode
+            if (surahMode) {
+                currentSurah = null;
+                currentVerseIndex = 0;
+                surahMode = false;
+            }
+
+            // Stop game
+            gameActive = false;
+            pauseDetection = false;
+        }
+
+        // ============================================
+        // SURAH TRAINING MODE - Navigation Functions
+        // ============================================
+
+        // Surah training state
+        let currentSurah = null;
+        let currentVerseIndex = 0;
+        let surahMode = false; // Flag to differentiate between free practice and surah mode
+        let verseStartTime = 0;
+        let verseMistakes = [];
+
+        // Navigate to Training Mode (Surah Selection) - Learn mode
+        window.selectTrainingMode = function () {
+            recitationMode = false; // Training mode, not recitation
+            surahMode = true;
+
+            document.getElementById('landingView').style.display = 'none';
+            document.getElementById('surahSelectionView').style.display = 'flex';
+            document.getElementById('surahSelectionView').classList.remove('hidden');
+
+            // Update header for training mode
+            document.querySelector('#surahSelectionView h1').innerText = 'اختر السورة للتدريب';
+
+            loadSurahs();
+        }
+
+        // Navigate to Recitation Mode (التسميع) - Test memorization
+        window.selectFreePracticeMode = function () {
+            recitationMode = true;
+            surahMode = true;
+
+            // Reset recitation tracking
+            letterErrorCount = {};
+            verseErrorCounts = [];
+            failedVerses = [];
+            verseResults = [];
+
+            // Navigate to surah selection (reuse existing view)
+            document.getElementById('landingView').style.display = 'none';
+            document.getElementById('surahSelectionView').style.display = 'flex';
+            document.getElementById('surahSelectionView').classList.remove('hidden');
+
+            // Update header for recitation mode
+            document.querySelector('#surahSelectionView h1').innerText = 'اختر السورة للتسميع';
+
+            loadSurahs();
+        }
+
+        // Back to Landing Page
+        window.backToLanding = function () {
+            document.getElementById('surahSelectionView').style.display = 'none';
+            document.getElementById('landingView').style.display = 'flex';
+        }
+
+        // Back to Surah Selection from Video Choice
+        window.backToSurahSelection = function () {
+            document.getElementById('videoChoiceView').style.display = 'none';
+            document.getElementById('surahSelectionView').style.display = 'flex';
+        }
+
+        // Load and display surahs
+        async function loadSurahs() {
+            try {
+                const response = await fetch('/get_surahs');
+                const surahs = await response.json();
+                const grid = document.getElementById('surahGrid');
+                grid.innerHTML = '';
+
+                for (const [id, surah] of Object.entries(surahs)) {
+                    const card = createSurahCard(id, surah);
+                    grid.appendChild(card);
+                }
+            } catch (e) {
+                console.error('Error loading surahs:', e);
+            }
+        }
+
+        // Create a surah card (List Item Style)
+        function createSurahCard(id, surah) {
+            const div = document.createElement('div');
+            const isLocked = !surah.unlocked;
+            const versesCount = surah.verses ? surah.verses.length : 0;
+
+            // Polygon shape for number
+            const polygonPath = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"; // Star shape
+            // Or simple octagon
+            const octagonPath = "M9.3 2h5.4L22 9.3v5.4L14.7 22H9.3L2 14.7V9.3L9.3 2z"; // Octagon like the image
+
+            div.className = `group flex items-center justify-between p-5 transition-all hover:bg-slate-50 ${isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`;
+
+            div.innerHTML = `
+                <!-- Right Side: Number & Info -->
+                <div class="flex items-center gap-4">
+                    <!-- Number Badge -->
+                    <div class="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
+                        <svg viewBox="0 0 24 24" class="absolute w-full h-full ${isLocked ? 'text-slate-300' : 'text-blue-500'} drop-shadow-sm" fill="currentColor">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /> 
+                        </svg>
+                        <span class="relative text-white font-bold text-sm pt-1 font-sans">${surah.number || '0'}</span>
+                    </div>
+                    
+                    <!-- Text Info -->
+                    <div class="text-right">
+                        <h3 class="text-lg font-bold text-slate-800 font-arabic group-hover:text-blue-600 transition-colors">${surah.name}</h3>
+                        <div class="flex items-center gap-2 text-xs text-slate-400 font-arabic mt-0.5">
+                            <span>${versesCount} آيات</span>
+                            <span>•</span>
+                            <span>صفحة 1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Left Side: Status -->
+                <div>
+                    ${isLocked
+                    ? `<span class="bg-slate-100 text-slate-400 text-[10px] font-bold px-3 py-1.5 rounded-full border border-slate-200">قريباً</span>`
+                    : `<svg class="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                           </svg>`
+                }
+                </div>
+            `;
+
+            if (!isLocked) {
+                div.onclick = () => selectSurah(id);
+            }
+
+            return div;
+        }
+
+        // Select a surah and show video choice
+        async function selectSurah(surahId) {
+            try {
+                const response = await fetch(`/get_surah/${surahId}`);
+                if (!response.ok) {
+                    alert('السورة غير متاحة حالياً');
+                    return;
+                }
+
+                currentSurah = await response.json();
+                currentVerseIndex = 0;
+                surahMode = true;
+
+                // Hide surah selection
+                document.getElementById('surahSelectionView').style.display = 'none';
+
+                // In recitation mode, skip video choice and go directly to training
+                if (recitationMode) {
+                    // Reset recitation tracking for this surah
+                    letterErrorCount = {};
+                    verseErrorCounts = [];
+                    verseResults = [];
+                    startSurahTraining();
+                } else {
+                    // Training mode - show video choice
+                    document.getElementById('videoChoiceView').style.display = 'flex';
+                    document.getElementById('videoChoiceView').classList.remove('hidden');
+                    document.getElementById('videoChoiceTitle').innerText = currentSurah.name;
+                }
+            } catch (e) {
+                console.error('Error selecting surah:', e);
+                alert('حدث خطأ في تحميل السورة');
+            }
+        }
+
+        // Back to video choice from video player
+        window.backToVideoChoice = function () {
+            document.getElementById('videoPlayerView').style.display = 'none';
+            document.getElementById('videoChoiceView').style.display = 'flex';
+        }
+
+        // Show video player
+        window.showVideoPlayer = function () {
+            document.getElementById('videoChoiceView').style.display = 'none';
+            document.getElementById('videoPlayerView').style.display = 'flex';
+            document.getElementById('videoPlayerView').classList.remove('hidden');
+            document.getElementById('videoPlayerTitle').innerText = currentSurah.name + ' - الشرح التعليمي';
+
+            // Load video URL
+            const iframe = document.getElementById('youtubePlayer');
+            iframe.src = currentSurah.video_url || '';
+        }
+
+        // Start training directly without video
+        window.startDirectTraining = function () {
+            document.getElementById('videoChoiceView').style.display = 'none';
+            startSurahTraining();
+        }
+
+        // Start training after watching video
+        window.startTrainingAfterVideo = function () {
+            document.getElementById('videoPlayerView').style.display = 'none';
+            startSurahTraining();
+        }
+
+        // Start surah training (verse by verse)
+        function startSurahTraining() {
+            // Show app view
+            document.getElementById('appView').style.display = 'flex';
+            document.getElementById('appView').classList.remove('hidden');
+
+            // Hide free practice input in surah mode
+            document.getElementById('freePracticeInput').classList.add('hidden');
+
+            // Initialize camera if needed
+            if (!video.srcObject) {
+                initAI();
+            }
+
+            // Start first verse
+            startVerseTraining();
+        }
+
+        // Start training for current verse
+        function startVerseTraining() {
+            if (!currentSurah || currentVerseIndex >= currentSurah.verses.length) {
+                return;
+            }
+
+            const verse = currentSurah.verses[currentVerseIndex];
+            targetSentence = verse;
+            currentTargetIndex = 0; // Always start from the beginning of the verse
+            score = 0;
+            verseStartTime = Date.now();
+            verseMistakes = [];
+            consecutiveCorrect = 0; // Reset consecutive counter for new verse
+
+            // Reset letter error count for new verse (recitation mode)
+            letterErrorCount = {};
+
+            // Update score display
+            document.getElementById('scoreValue').innerText = '0';
+
+            // === RECITATION MODE: Hide cards with images, but show verse text ===
+            const cardsTrack = document.getElementById('cardsTrack');
+            const letterErrorCounter = document.getElementById('letterErrorCounter');
+            const verseProgressDisplay = document.getElementById('verseProgressDisplay');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+
+            if (recitationMode) {
+                // Hide only the cards track (images), keep verse text visible
+                cardsTrack.classList.add('hidden');
+                // Show error counter in recitation mode
+                letterErrorCounter.classList.remove('hidden');
+                // Reset error counter display
+                document.getElementById('letterErrorCount').innerText = '0/10';
+                // Show verse progress
+                verseProgressDisplay.classList.remove('hidden');
+                // Hide score display
+                scoreDisplay.classList.add('hidden');
+                // Update verse progress
+                updateVerseProgress();
+            } else {
+                // Show cards track in training mode
+                cardsTrack.classList.remove('hidden');
+                // Hide error counter in training mode
+                letterErrorCounter.classList.add('hidden');
+                // Hide verse progress
+                verseProgressDisplay.classList.add('hidden');
+                // Show score display
+                scoreDisplay.classList.remove('hidden');
+            }
+
+            // Reset last wrong prediction for new verse
+            lastWrongPrediction = null;
+
+            // Render cards for this verse (in training mode, it shows cards; in recitation, it updates the word display)
+            renderCards();
+
+            // Start game
+            gameActive = true;
+            startTime = Date.now();
+            currentLetterStartTime = Date.now();
+            pauseDetection = false; // Ensure detection is active
+        }
+
+        // Handle verse completion
+        function onVerseComplete() {
+            gameActive = false;
+
+            // === RECITATION MODE: Calculate verse error rate ===
+            if (recitationMode) {
+                const verseLetterCount = targetSentence.replace(/\s/g, '').length;
+
+                // Count how many LETTERS had errors (not total attempts)
+                // A letter is "failed" if it had any errors
+                let lettersWithErrors = 0;
+                let totalAttemptErrors = 0;
+
+                for (let idx in letterErrorCount) {
+                    if (letterErrorCount[idx] > 0) {
+                        lettersWithErrors++; // This letter had at least one error
+                        totalAttemptErrors += letterErrorCount[idx]; // Total attempts for display
+                    }
+                }
+
+                // Error rate = percentage of letters that had any errors
+                const verseErrorRate = verseLetterCount > 0 ? (lettersWithErrors / verseLetterCount) * 100 : 0;
+
+                // Store verse result
+                verseResults.push({
+                    verse: targetSentence,
+                    verseIndex: currentVerseIndex,
+                    errorRate: verseErrorRate,
+                    lettersWithErrors: lettersWithErrors,
+                    totalAttemptErrors: totalAttemptErrors,
+                    totalLetters: verseLetterCount,
+                    passed: verseErrorRate <= VERSE_FAILURE_THRESHOLD
+                });
+
+                // If error rate > threshold%, add to failed verses
+                if (verseErrorRate > VERSE_FAILURE_THRESHOLD) {
+                    failedVerses.push({
+                        verse: targetSentence,
+                        verseIndex: currentVerseIndex,
+                        errorRate: verseErrorRate
+                    });
+                }
+            }
+
+            // Show simple "أحسنت" briefly
+            document.getElementById('congratsOverlay').classList.remove('hidden');
+
+            // Quick display (800ms) then move to next verse
+            setTimeout(() => {
+                document.getElementById('congratsOverlay').classList.add('hidden');
+
+                // Move to next verse or finish
+                currentVerseIndex++;
+                if (currentVerseIndex < currentSurah.verses.length) {
+                    // Next verse - starts from beginning automatically
+                    startVerseTraining();
+                } else {
+                    // Finished all verses - show final results
+                    showSurahFinalResults();
+                }
+            }, 800); // Short delay - just enough to see "أحسنت"
+        }
+
+        // ============================================
+        // CORRECTION OVERLAY FUNCTIONS (Recitation Mode)
+        // ============================================
+        function showCorrectionOverlay(letter) {
+            pauseDetection = true; // Pause detection while showing overlay
+            gameActive = false;
+
+            // Set correct sign image
+            const img = document.getElementById('correctSignImage');
+            img.src = `/sign_image/${encodeURIComponent(letter)}`;
+            img.onerror = function () { this.style.opacity = '0.3'; };
+
+            // Set correct letter
+            document.getElementById('correctLetterDisplay').innerText = letter;
+
+            // Update error count badge with actual attempts for this letter
+            const currentErrors = letterErrorCount[currentTargetIndex] || 0;
+            document.getElementById('errorCountBadge').innerText = `حاولت ${currentErrors} من ${MAX_ATTEMPTS_PER_LETTER} مرات`;
+
+            // Show overlay
+            document.getElementById('correctionOverlay').classList.remove('hidden');
+        }
+
+        window.skipLetter = function () {
+            // Hide overlay
+            document.getElementById('correctionOverlay').classList.add('hidden');
+
+            // Mark this letter as skipped (failed)
+            const card = document.getElementById(`c-${currentTargetIndex}`);
+            if (card) {
+                card.classList.add('border-orange-500', 'bg-orange-50');
+                const letterDisplay = document.getElementById(`letter-${currentTargetIndex}`);
+                if (letterDisplay) {
+                    letterDisplay.className = 'text-2xl font-black text-orange-500 mt-1 quran-text';
+                }
+            }
+
+            // Move to next letter
+            currentTargetIndex++;
+
+            // Skip spaces
+            while (currentTargetIndex < targetSentence.length && targetSentence[currentTargetIndex] === ' ') {
+                currentTargetIndex++;
+            }
+
+            // Check if verse complete
+            if (currentTargetIndex >= targetSentence.length) {
+                onVerseComplete();
+            } else {
+                // Continue with next letter
+                gameActive = true;
+                pauseDetection = false;
+                updateCardStyles();
+                updateCurrentWord();
+                currentLetterStartTime = Date.now();
+
+                const next = document.getElementById(`c-${currentTargetIndex}`);
+                if (next) {
+                    next.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                }
+            }
+        }
+
+        window.retryLetter = function () {
+            // Hide overlay
+            document.getElementById('correctionOverlay').classList.add('hidden');
+
+            // Reset error count for this letter (give another chance)
+            letterErrorCount[currentTargetIndex] = 0;
+
+            // Resume detection
+            gameActive = true;
+            pauseDetection = false;
+        }
+
+        // Show congrats message between verses
+        function showCongratsMessage() {
+            const overlay = document.getElementById('congratsOverlay');
+            const message = document.getElementById('congratsMessage');
+
+            if (currentVerseIndex < currentSurah.verses.length - 1) {
+                message.innerText = 'انتقال للآية التالية...';
+            } else {
+                message.innerText = 'أكملت السورة!';
+            }
+
+            overlay.classList.remove('hidden');
+        }
+
+        // Show final results for surah completion
+        function showSurahFinalResults() {
+            const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+            const totalMistakes = mistakes.length;
+            const totalLetters = currentSurah.verses.join('').replace(/\s/g, '').length;
+            const accuracy = ((totalLetters - totalMistakes) / totalLetters * 100).toFixed(0);
+
+            // === RECITATION MODE: Show verse-by-verse breakdown ===
+            if (recitationMode && verseResults.length > 0) {
+                const passedVerses = verseResults.filter(v => v.passed).length;
+                const totalVerses = verseResults.length;
+
+                // Update summary with recitation-specific content
+                document.getElementById('sumScore').innerText = `${passedVerses}/${totalVerses}`;
+                document.getElementById('sumTime').innerText = totalTime + 's';
+
+                // Build verse breakdown HTML
+                let verseBreakdownHtml = '<div class="text-right space-y-2">';
+                verseResults.forEach((result, idx) => {
+                    const statusIcon = result.passed ? '✅' : '❌';
+                    const statusColor = result.passed ? 'text-green-600' : 'text-red-600';
+                    const bgColor = result.passed ? 'bg-green-50' : 'bg-red-50';
+                    const errorInfo = result.lettersWithErrors > 0
+                        ? `(${result.lettersWithErrors}/${result.totalLetters} حرف)`
+                        : '(بدون أخطاء)';
+                    verseBreakdownHtml += `
+                        <div class="flex items-center justify-between ${bgColor} rounded-xl p-3">
+                            <span class="${statusColor} font-bold">${statusIcon} ${result.passed ? 'نجحت' : 'تحتاج مراجعة'} <span class="text-xs font-normal">${errorInfo}</span></span>
+                            <span class="text-slate-600 font-arabic text-sm quran-text truncate max-w-[200px]">${result.verse.substring(0, 30)}${result.verse.length > 30 ? '...' : ''}</span>
+                        </div>
+                    `;
+                });
+                verseBreakdownHtml += '</div>';
+
+                document.getElementById('completedSentence').innerHTML = verseBreakdownHtml;
+
+                // Show "Practice Errors" button only if there are failed verses
+                const practiceErrorsBtn = document.getElementById('practiceErrorsBtn');
+                if (practiceErrorsBtn) {
+                    if (failedVerses.length > 0) {
+                        practiceErrorsBtn.classList.remove('hidden');
+                        practiceErrorsBtn.querySelector('span').innerText = `تدرب على الأخطاء (${failedVerses.length} آية)`;
+                    } else {
+                        practiceErrorsBtn.classList.add('hidden');
+                    }
+                }
+            } else {
+                // Training mode - original behavior
+                document.getElementById('sumScore').innerText = `${currentSurah.verses.length}/${currentSurah.verses.length}`;
+                document.getElementById('sumTime').innerText = totalTime + 's';
+                document.getElementById('completedSentence').innerText = currentSurah.verses.join(' • ');
+            }
+
+            // Show surah selection button
+            document.getElementById('backToSurahSelectionBtn').classList.remove('hidden');
+
+            // Show summary
+            document.getElementById('summaryOverlay').classList.remove('hidden');
+        }
+
+        // Back to surah selection from results
+        window.backToSurahSelectionFromResults = function () {
+            // Hide all overlays
+            document.getElementById('summaryOverlay').classList.add('hidden');
+            document.getElementById('analyticsOverlay').classList.add('hidden');
+            document.getElementById('appView').style.display = 'none';
+
+            // Show surah selection
+            document.getElementById('surahSelectionView').style.display = 'flex';
+            document.getElementById('surahSelectionView').classList.remove('hidden');
+
+            // Reset game state
+            restartGame();
+
+            // Hide buttons again for next time
+            document.getElementById('backToSurahSelectionBtn').classList.add('hidden');
+            document.getElementById('practiceErrorsBtn').classList.add('hidden');
+        }
+
+        // ============================================
+        // PRACTICE ERRORS FEATURE (Recitation Mode)
+        // ============================================
+        window.startPracticeErrors = function () {
+            if (failedVerses.length === 0) {
+                alert('لا توجد آيات تحتاج مراجعة!');
+                return;
+            }
+
+            // Hide summary overlay
+            document.getElementById('summaryOverlay').classList.add('hidden');
+
+            // Create a temporary surah with only failed verses
+            const originalVerses = currentSurah.verses.slice(); // Backup original verses
+            currentSurah.verses = failedVerses.map(fv => fv.verse);
+
+            // Reset tracking for practice session
+            currentVerseIndex = 0;
+            letterErrorCount = {};
+            verseResults = [];
+            failedVerses = [];
+            mistakes = [];
+            letterStats = {};
+
+            // Start training with failed verses only
+            startVerseTraining();
+
+            // Store original verses to restore later (attach to currentSurah)
+            currentSurah._originalVerses = originalVerses;
+            currentSurah._isPracticeErrors = true;
+        }
+
+        // ============================================
+        // AI INIT
+        // ============================================
+        async function initAI() {
+            try {
+                const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                        delegate: "GPU"
+                    },
+                    runningMode: runningMode,
+                    numHands: 2,
+                    minHandDetectionConfidence: 0.5,
+                    minHandPresenceConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+                startCamera();
+            } catch (e) {
+                console.error("AI Init Failed:", e);
+                alert("Could not load AI model. Please refresh.");
+            }
+        }
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({
+                video: { width: 1280, height: 720, frameRate: { ideal: 60 } }
+            }).then((stream) => {
+                video.srcObject = stream;
+                video.addEventListener("loadeddata", predictWebcam);
+            }).catch(e => {
+                console.error("Camera denied:", e);
+                alert("Camera access denied. Please allow camera access.");
+            });
+        }
+
+        // ============================================
+        // PREDICTION LOOP
+        // ============================================
+
+        // Hand landmark connections for drawing
+        const HAND_CONNECTIONS = [
+            [0, 1], [1, 2], [2, 3], [3, 4],           // Thumb
+            [0, 5], [5, 6], [6, 7], [7, 8],           // Index
+            [0, 9], [9, 10], [10, 11], [11, 12],      // Middle
+            [0, 13], [13, 14], [14, 15], [15, 16],    // Ring
+            [0, 17], [17, 18], [18, 19], [19, 20],    // Pinky
+            [5, 9], [9, 13], [13, 17]                  // Palm
+        ];
+
+        // Draw hand landmarks on canvas (Skeleton Style - Green)
+        function drawHandLandmarks(landmarks, canvasWidth, canvasHeight) {
+            if (!landmarks || landmarks.length === 0) return;
+
+            // Draw for each hand
+            for (const handLandmarks of landmarks) {
+
+                // === SKELETON BONES (Lines) ===
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                // Draw bone shadows first (for depth effect)
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.lineWidth = 8;
+                for (const [start, end] of HAND_CONNECTIONS) {
+                    const startPoint = handLandmarks[start];
+                    const endPoint = handLandmarks[end];
+                    if (startPoint && endPoint) {
+                        ctx.beginPath();
+                        ctx.moveTo(startPoint.x * canvasWidth + 2, startPoint.y * canvasHeight + 2);
+                        ctx.lineTo(endPoint.x * canvasWidth + 2, endPoint.y * canvasHeight + 2);
+                        ctx.stroke();
+                    }
+                }
+
+                // Draw main bones (white skeleton)
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 5;
+                for (const [start, end] of HAND_CONNECTIONS) {
+                    const startPoint = handLandmarks[start];
+                    const endPoint = handLandmarks[end];
+                    if (startPoint && endPoint) {
+                        ctx.beginPath();
+                        ctx.moveTo(startPoint.x * canvasWidth, startPoint.y * canvasHeight);
+                        ctx.lineTo(endPoint.x * canvasWidth, endPoint.y * canvasHeight);
+                        ctx.stroke();
+                    }
+                }
+
+                // Draw inner bone line (green glow)
+                ctx.strokeStyle = '#22C55E';
+                ctx.lineWidth = 2;
+                for (const [start, end] of HAND_CONNECTIONS) {
+                    const startPoint = handLandmarks[start];
+                    const endPoint = handLandmarks[end];
+                    if (startPoint && endPoint) {
+                        ctx.beginPath();
+                        ctx.moveTo(startPoint.x * canvasWidth, startPoint.y * canvasHeight);
+                        ctx.lineTo(endPoint.x * canvasWidth, endPoint.y * canvasHeight);
+                        ctx.stroke();
+                    }
+                }
+
+                // === JOINTS (Circle points) ===
+                for (let i = 0; i < handLandmarks.length; i++) {
+                    const point = handLandmarks[i];
+                    const x = point.x * canvasWidth;
+                    const y = point.y * canvasHeight;
+
+                    // Joint size based on position
+                    let radius = 6;
+                    if (i === 0) radius = 10; // Wrist - larger
+                    else if ([4, 8, 12, 16, 20].includes(i)) radius = 5; // Fingertips - smaller
+
+                    // Shadow
+                    ctx.beginPath();
+                    ctx.arc(x + 2, y + 2, radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                    ctx.fill();
+
+                    // Outer white ring
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fill();
+
+                    // Inner green dot
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius * 0.5, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#22C55E';
+                    ctx.fill();
+                }
+            }
+        }
+
+        async function predictWebcam() {
+            // Check if app is visible, if not, skip processing to save battery
+            const app = document.getElementById('appView');
+            if (app.style.display === 'none') {
+                requestAnimationFrame(predictWebcam);
+                return;
+            }
+
+            // PAUSE CHECK
+            if (pauseDetection) {
+                requestAnimationFrame(predictWebcam);
+                return;
+            }
+
+            if (video.videoWidth > 0 && overlay.width !== video.videoWidth) {
+                overlay.width = video.videoWidth;
+                overlay.height = video.videoHeight;
+                document.getElementById("cameraWrapper").style.aspectRatio = `${video.videoWidth}/${video.videoHeight}`;
+            }
+
+            if (handLandmarker && video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                let startTimeMs = performance.now();
+                const results = handLandmarker.detectForVideo(video, startTimeMs);
+
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+                if (results.landmarks && results.landmarks.length > 0) {
+
+                    // *** DRAW HAND LANDMARKS IN REAL-TIME ***
+                    drawHandLandmarks(results.landmarks, overlay.width, overlay.height);
+
+                    // Prediction Throttle
+                    const now = Date.now();
+                    if (now - lastPredictionTime > PREDICTION_INTERVAL) {
+                        lastPredictionTime = now;
+                        sendForPrediction();
+                    }
+                } else {
+                    predVal.innerText = '-';
+                    predVal.classList.remove('text-green-500', 'text-red-500');
+                    predVal.classList.add('text-blue-600');
+                }
+            }
+            requestAnimationFrame(predictWebcam);
+        }
+
+        // ============================================
+        // BACKEND
+        // ============================================
+        function sendForPrediction() {
+            const proc = document.createElement('canvas');
+            proc.width = video.videoWidth;
+            proc.height = video.videoHeight;
+            const pCtx = proc.getContext('2d');
+            pCtx.drawImage(video, 0, 0, proc.width, proc.height);
+            const u = proc.toDataURL('image/jpeg', 0.5);
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: u })
+            }).then(r => r.json()).then(d => {
+                // Handle prediction (can be null, string, or undefined)
+                if (d.prediction !== undefined && d.prediction !== null) {
+                    const p = d.prediction;
+                    predVal.innerText = p;
+
+                    // Reset color to blue by default
+                    predVal.classList.remove('text-red-500', 'text-green-500');
+                    predVal.classList.add('text-blue-600');
+
+                    // Game Check
+                    if (gameActive && currentTargetIndex < targetSentence.length) {
+                        const target = targetSentence[currentTargetIndex];
+                        if (areCharsEquivalent(p, target)) {
+                            // --- CORRECT DETECTION ---
+                            consecutiveCorrect++;
+
+                            // Show green feedback
+                            predVal.classList.remove('text-blue-600', 'text-red-500');
+                            predVal.classList.add('text-green-500');
+
+                            // Reset last wrong prediction when correct
+                            lastWrongPrediction = null;
+
+                            // Only advance after REQUIRED_CONSECUTIVE correct detections
+                            if (consecutiveCorrect >= REQUIRED_CONSECUTIVE) {
+                                consecutiveCorrect = 0; // Reset counter
+                                handleSuccess();
+                            }
+                        } else {
+                            // --- INCORRECT ---
+                            consecutiveCorrect = 0; // Reset consecutive counter on wrong
+                            predVal.classList.remove('text-green-500', 'text-blue-600');
+                            predVal.classList.add('text-red-500'); // Red feedback
+
+                            // === SKIP if same wrong prediction repeated (don't count ف ف ف ف multiple times) ===
+                            if (p === lastWrongPrediction) {
+                                // Same wrong letter repeated - don't count as new error
+                                return;
+                            }
+                            lastWrongPrediction = p; // Store this wrong prediction
+
+                            // Track mistake
+                            totalAttempts++;
+                            const currentLetter = target;
+                            if (!letterStats[currentLetter]) {
+                                letterStats[currentLetter] = { correct: 0, wrong: 0, totalTime: 0 };
+                            }
+                            letterStats[currentLetter].wrong++;
+
+                            mistakes.push({
+                                letter: currentLetter,
+                                predicted: p,
+                                timestamp: Date.now() - startTime
+                            });
+
+                            // === RECITATION MODE: Track errors per letter position ===
+                            if (recitationMode) {
+                                if (!letterErrorCount[currentTargetIndex]) {
+                                    letterErrorCount[currentTargetIndex] = 0;
+                                }
+                                letterErrorCount[currentTargetIndex]++;
+
+                                // Update error counter display
+                                const errorCounter = document.getElementById('letterErrorCount');
+                                errorCounter.innerText = `${letterErrorCount[currentTargetIndex]}/${MAX_ATTEMPTS_PER_LETTER}`;
+
+                                // Check if max attempts reached
+                                if (letterErrorCount[currentTargetIndex] >= MAX_ATTEMPTS_PER_LETTER) {
+                                    // Show correction overlay
+                                    showCorrectionOverlay(currentLetter);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // No prediction (no hand detected)
+                    predVal.innerText = '-';
+                    predVal.classList.remove('text-green-500', 'text-red-500');
+                    predVal.classList.add('text-blue-600');
+                }
+            }).catch(e => {
+                console.error('Prediction error:', e);
+                predVal.innerText = '-';
+            });
+        }
+
+        // ============================================
+        // UTILS
+        // ============================================
+        function normalizeArabicChar(char) {
+            if (!char) return '';
+
+            // تطبيع الألف: أ، إ، آ، ء → ا
+            char = char.replace(/[أإآءٱ]/g, 'ا');
+
+            // تطبيع الياء: ى، ئ → ي
+            char = char.replace(/[ىئ]/g, 'ي');
+
+            // تطبيع التاء المربوطة: ة → ه
+            char = char.replace(/[ة]/g, 'ه');
+
+            // إزالة التشكيل (الحركات)
+            char = char.replace(/[\u064B-\u065F\u0670]/g, '');
+
+            return char;
+        }
+
+        function areCharsEquivalent(pred, target) {
+            if (!pred || !target) return false;
+
+            // تطبيع كلا الحرفين للمقارنة
+            const normalizedPred = normalizeArabicChar(pred);
+            const normalizedTarget = normalizeArabicChar(target);
+
+            return normalizedPred === normalizedTarget;
+        }
+
+        // ============================================
+        // GAME LOGIC
+        // ============================================
+
+        function handleSuccess() {
+            if (pauseDetection) return; // double safety
+            pauseDetection = true; // STOP Detection
+
+            // Track success
+            totalAttempts++;
+            const currentLetter = targetSentence[currentTargetIndex];
+            if (!letterStats[currentLetter]) {
+                letterStats[currentLetter] = { correct: 0, wrong: 0, totalTime: 0 };
+            }
+            letterStats[currentLetter].correct++;
+
+            // Track time for this letter
+            if (currentLetterStartTime > 0) {
+                const letterTime = Date.now() - currentLetterStartTime;
+                letterStats[currentLetter].totalTime += letterTime;
+            }
+
+            // 1. Update UI (Success State)
+            score += 10;
+            document.getElementById('scoreValue').innerText = score;
+
+            predVal.classList.remove('text-blue-600', 'text-red-500');
+            predVal.classList.add('text-green-500', 'scale-110'); // Pop effect (reduced scale)
+
+            // Show success flash animation (especially helpful in recitation mode)
+            if (recitationMode) {
+                showSuccessFlash();
+            }
+
+            // Highlight Current Card
+            const card = document.getElementById(`c-${currentTargetIndex}`);
+            if (card) {
+                // Update letter display to green
+                const letterDisplay = document.getElementById(`letter-${currentTargetIndex}`);
+                if (letterDisplay) {
+                    letterDisplay.className = 'text-2xl font-black text-green-500 mt-1 quran-text';
+                    letterDisplay.style.fontFamily = "'Amiri', 'Arabic Typesetting', 'Traditional Arabic', serif";
+                }
+
+                card.classList.add('border-green-500', 'bg-green-50', 'ring-2', 'ring-green-200');
+            }
+
+            // Update the word display at top
+            updateCurrentWord();
+
+            // 2. Wait 800ms then Advance
+            setTimeout(() => {
+                predVal.classList.remove('scale-110');
+
+                // Mark current as done
+                if (card) {
+                    card.classList.remove('ring-2', 'ring-green-200', 'scale-105');
+                    card.className = 'flex-shrink-0 w-28 h-40 bg-green-50 rounded-xl border border-green-400 flex flex-col items-center justify-between py-2 px-2 transition-all duration-500 transform scale-90 opacity-40';
+                }
+
+                currentTargetIndex++;
+
+                // === RECITATION MODE: Reset error counter for new letter ===
+                if (recitationMode) {
+                    const currentErrors = letterErrorCount[currentTargetIndex] || 0;
+                    document.getElementById('letterErrorCount').innerText = `${currentErrors}/10`;
+                }
+
+                // CHECK FOR SPACE -> Auto Advance & Complete Word
+                if (currentTargetIndex < targetSentence.length && targetSentence[currentTargetIndex] === ' ') {
+                    // Mark word as complete - COLOR LAST LETTER
+                    markWordComplete(currentTargetIndex - 1);
+
+                    // Update word display one more time to show all green
+                    updateCurrentWord();
+
+                    currentTargetIndex++; // Skip space
+
+                    // Reset error counter after space too
+                    if (recitationMode) {
+                        const currentErrors = letterErrorCount[currentTargetIndex] || 0;
+                        document.getElementById('letterErrorCount').innerText = `${currentErrors}/10`;
+                    }
+                }
+
+                if (currentTargetIndex >= targetSentence.length) {
+                    // Final Word Complete - COLOR LAST LETTER
+                    markWordComplete(currentTargetIndex - 1);
+
+                    // Check if in surah mode
+                    if (surahMode && currentSurah) {
+                        setTimeout(onVerseComplete, 1000);
+                    } else {
+                        setTimeout(endGame, 1000);
+                    }
+                } else {
+                    // Activate Next
+                    const next = document.getElementById(`c-${currentTargetIndex}`);
+                    if (next) {
+                        next.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                        updateCardStyles();
+                        // Start timing for next letter
+                        currentLetterStartTime = Date.now();
+                    }
+                }
+
+                pauseDetection = false; // RESUME Detection
+            }, 800); // 800ms delay
+        }
+
+        function markWordComplete(endIdx) {
+            // Go backwards from endIdx until space or start - COLOR ALL INCLUDING LAST LETTER
+            for (let i = endIdx; i >= 0; i--) {
+                if (i < 0) break;
+                if (targetSentence[i] === ' ') break;
+
+                const c = document.getElementById(`c-${i}`);
+                if (c) {
+                    // Completed word state - all green and dimmed
+                    c.className = `flex-shrink-0 w-28 h-40 bg-green-50 rounded-xl border border-green-300 flex flex-col items-center justify-between py-2 px-2 transition-all duration-500 transform scale-85 opacity-40 shadow-inner`;
+
+                    // Update letter display - MAKE SURE IT'S GREEN
+                    const letterDisplay = document.getElementById(`letter-${i}`);
+                    if (letterDisplay) {
+                        letterDisplay.className = 'text-2xl font-black text-green-600 mt-1 quran-text';
+                        letterDisplay.style.fontFamily = "'Amiri', 'Arabic Typesetting', 'Traditional Arabic', serif";
+                    }
+
+                    // Update Image
+                    const img = c.querySelector('img');
+                    if (img) {
+                        img.className = 'w-24 h-24 object-contain mix-blend-multiply flex-shrink-0 opacity-50';
+                    }
+                }
+            }
+        }
+
+        window.startGame = () => {
+            const input = document.getElementById('gameInput').value.trim();
+            if (!input) return;
+            targetSentence = input;
+            score = 0;
+            document.getElementById('scoreValue').innerText = 0;
+            currentTargetIndex = 0;
+            gameActive = true;
+            startTime = Date.now();
+            currentLetterStartTime = Date.now();
+
+            // Reset analytics
+            mistakes = [];
+            letterStats = {};
+            totalAttempts = 0;
+
+            renderCards();
+            document.getElementById('gameInput').value = "";
+        };
+
+        function renderCards() {
+            const track = document.getElementById('cardsTrack');
+            track.innerHTML = "";
+
+            // Split into words
+            const words = targetSentence.split(' ');
+            let charIndex = 0;
+
+            words.forEach((word, wordIdx) => {
+                // Render each letter of the word
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    const c = document.createElement('div');
+
+                    // Simple Card - Only Image and Letter (Compact spacing)
+                    c.className = `flex-shrink-0 w-28 h-40 bg-white rounded-xl border-2 flex flex-col items-center justify-between py-2 px-2 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform ${charIndex === 0 ? 'border-blue-500 scale-105 opacity-100 shadow-lg' : 'border-slate-100 scale-95 opacity-50'}`;
+                    c.id = 'c-' + charIndex;
+                    c.setAttribute('data-word', word);
+                    c.setAttribute('data-word-index', i);
+
+                    // SIGN IMAGE
+                    const img = document.createElement('img');
+                    img.src = `/sign_image/${encodeURIComponent(char)}`;
+                    img.className = 'w-24 h-24 object-contain mix-blend-multiply flex-shrink-0';
+                    img.onerror = function () { this.style.opacity = '0.3'; };
+                    c.appendChild(img);
+
+                    // CURRENT LETTER (larger, Arabic font)
+                    const s = document.createElement('span');
+                    s.innerText = char;
+                    s.className = 'text-2xl font-black text-blue-600 mt-1 quran-text';
+                    s.id = `letter-${charIndex}`;
+                    c.appendChild(s);
+
+                    track.appendChild(c);
+                    charIndex++;
+                }
+
+                // Add space separator after each word (except last)
+                if (wordIdx < words.length - 1) {
+                    const spacer = document.createElement('div');
+                    spacer.className = 'flex-shrink-0 w-4 h-40 bg-transparent flex items-center justify-center';
+                    spacer.id = 'c-' + charIndex;
+                    spacer.innerHTML = '<span class="text-slate-300 text-lg opacity-30">•</span>';
+                    track.appendChild(spacer);
+                    charIndex++; // Space character
+                }
+            });
+
+            // Scroll to the beginning (right side for RTL)
+            track.scrollLeft = track.scrollWidth;
+
+            // Update the word display at top
+            updateCurrentWord();
+        }
+
+        // Update verse progress display (Recitation Mode)
+        function updateVerseProgress() {
+            if (!recitationMode || !currentSurah) return;
+
+            const totalVerses = currentSurah.verses.length;
+            const currentVerse = currentVerseIndex + 1;
+            const progressPercent = (currentVerseIndex / totalVerses) * 100;
+
+            document.getElementById('verseProgressText').innerText = `آية ${currentVerse} من ${totalVerses}`;
+            document.getElementById('verseProgressBar').style.width = `${progressPercent}%`;
+        }
+
+        // Show success flash animation
+        function showSuccessFlash() {
+            const flash = document.getElementById('successFlash');
+            flash.classList.remove('hidden');
+
+            // Hide after animation
+            setTimeout(() => {
+                flash.classList.add('hidden');
+            }, 400);
+        }
+
+        function updateCurrentWord() {
+            // Find current word
+            const card = document.getElementById(`c-${currentTargetIndex}`);
+            if (!card) return;
+
+            const word = card.getAttribute('data-word');
+            if (!word) {
+                // Hide word display if we're at a space
+                document.getElementById('currentWordDisplay').classList.add('hidden');
+                return;
+            }
+
+            // Show word display
+            document.getElementById('currentWordDisplay').classList.remove('hidden');
+
+            const wordIndex = parseInt(card.getAttribute('data-word-index') || '0');
+            const wordDisplay = document.getElementById('currentWordText');
+
+            // Build word with colored spans - AS ONE CONNECTED WORD
+            let html = '<span dir="rtl" style="display: inline-block; font-family: \'Amiri\', \'Arabic Typesetting\', \'Traditional Arabic\', serif;">';
+            for (let i = 0; i < word.length; i++) {
+                let color;
+                if (i < wordIndex) {
+                    color = '#22c55e'; // green-500
+                } else if (i === wordIndex) {
+                    color = '#3b82f6'; // blue-600
+                } else {
+                    color = '#cbd5e1'; // slate-300
+                }
+                // IMPORTANT: No spaces between letters - Arabic will connect naturally
+                html += `<span style="color: ${color}; transition: all 0.3s ease;">${word[i]}</span>`;
+            }
+            html += '</span>';
+
+            wordDisplay.innerHTML = html;
+        }
+
+        function updateCardStyles() {
+            // Update the current word display at top
+            updateCurrentWord();
+
+            // Update card states
+            for (let i = 0; i < targetSentence.length; i++) {
+                const c = document.getElementById(`c-${i}`);
+                if (!c) continue;
+                if (targetSentence[i] === ' ') continue;
+
+                if (i === currentTargetIndex) {
+                    // Active Card
+                    c.className = `flex-shrink-0 w-28 h-40 bg-white rounded-xl border-2 flex flex-col items-center justify-between py-2 px-2 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform border-blue-500 scale-105 opacity-100 shadow-lg ring-2 ring-blue-500/10`;
+                } else if (i > currentTargetIndex) {
+                    // Future Card
+                    c.className = `flex-shrink-0 w-28 h-40 bg-white rounded-xl border flex flex-col items-center justify-between py-2 px-2 transition-all duration-500 transform border-slate-200 scale-95 opacity-50`;
+                }
+            }
+        }
+
+        function endGame() {
+            gameActive = false;
+            const dur = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('sumScore').innerText = score;
+            document.getElementById('sumTime').innerText = dur + "s";
+
+            // Display completed sentence
+            document.getElementById('completedSentence').innerText = targetSentence;
+
+            document.getElementById('summaryOverlay').classList.remove('hidden');
+        }
+
+        window.closeSummary = () => {
+            document.getElementById('summaryOverlay').classList.add('hidden');
+        }
+
+        window.showAnalytics = () => {
+            // Hide summary
+            document.getElementById('summaryOverlay').classList.add('hidden');
+
+            // Show loading
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+
+            // Simulate analysis time
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                generateAnalytics();
+                document.getElementById('analyticsOverlay').classList.remove('hidden');
+            }, 2000);
+        }
+
+        window.closeAnalytics = () => {
+            document.getElementById('analyticsOverlay').classList.add('hidden');
+        }
+
+        window.restartGame = () => {
+            // Stop current game
+            gameActive = false;
+            pauseDetection = false;
+
+            // Reset all game variables
+            targetSentence = "";
+            currentTargetIndex = 0;
+            score = 0;
+            startTime = 0;
+            currentLetterStartTime = 0;
+
+            // Reset analytics
+            mistakes = [];
+            letterStats = {};
+            totalAttempts = 0;
+
+            // Reset recitation mode variables
+            recitationMode = false;
+            letterErrorCount = {};
+            verseErrorCounts = [];
+            failedVerses = [];
+            verseResults = [];
+
+            // Reset surah mode if active
+            if (surahMode) {
+                currentSurah = null;
+                currentVerseIndex = 0;
+                surahMode = false;
+            }
+
+            // Reset UI
+            document.getElementById('scoreValue').innerText = '0';
+            predVal.innerText = '-';
+            predVal.classList.remove('text-green-500', 'text-red-500');
+            predVal.classList.add('text-blue-600');
+
+            // Clear input
+            document.getElementById('gameInput').value = '';
+
+            // Clear cards
+            document.getElementById('cardsTrack').innerHTML = '';
+
+            // Show cards track (in case it was hidden in recitation mode)
+            document.getElementById('cardsTrack').classList.remove('hidden');
+
+            // Hide error counter (in case it was shown in recitation mode)
+            document.getElementById('letterErrorCounter').classList.add('hidden');
+
+            // Hide verse progress (in case it was shown in recitation mode)
+            document.getElementById('verseProgressDisplay').classList.add('hidden');
+
+            // Show score display
+            document.getElementById('scoreDisplay').classList.remove('hidden');
+
+            // Reset last wrong prediction
+            lastWrongPrediction = null;
+
+            // Hide word display
+            document.getElementById('currentWordDisplay').classList.add('hidden');
+        }
+
+        function generateAnalytics() {
+            const content = document.getElementById('analyticsContent');
+            const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+            // Calculate total letters across all verses in surah mode or current sentence
+            let totalLetters;
+            let displaySentence;
+            if (surahMode && currentSurah) {
+                totalLetters = currentSurah.verses.join('').replace(/ /g, '').length;
+                displaySentence = currentSurah.verses.join(' • ');
+            } else {
+                totalLetters = targetSentence.replace(/ /g, '').length;
+                displaySentence = targetSentence;
+            }
+
+            const totalMistakes = mistakes.length;
+            const accuracy = ((totalLetters / (totalLetters + totalMistakes)) * 100).toFixed(1);
+
+            // Find most difficult letter
+            let mostDifficult = null;
+            let maxErrors = 0;
+            for (let letter in letterStats) {
+                if (letterStats[letter].wrong > maxErrors) {
+                    maxErrors = letterStats[letter].wrong;
+                    mostDifficult = letter;
+                }
+            }
+
+            // Calculate average time per letter
+            let totalTime = 0;
+            let letterCount = 0;
+            for (let letter in letterStats) {
+                if (letterStats[letter].correct > 0) {
+                    totalTime += letterStats[letter].totalTime;
+                    letterCount += letterStats[letter].correct;
+                }
+            }
+            const avgTimePerLetter = letterCount > 0 ? (totalTime / letterCount / 1000).toFixed(1) : 0;
+
+            let html = '';
+
+            // Surah-specific header
+            if (surahMode && currentSurah) {
+                const passedVerses = recitationMode ? verseResults.filter(v => v.passed).length : currentSurah.verses.length;
+                const totalVerses = currentSurah.verses.length;
+                const modeLabel = recitationMode ? 'تقرير التسميع' : 'تقرير التدريب';
+                const headerColor = recitationMode ? 'from-indigo-500 to-purple-600' : 'from-cyan-500 to-blue-600';
+
+                html += `
+                    <div class="bg-gradient-to-br ${headerColor} rounded-3xl p-8 shadow-xl text-center mb-6">
+                        <div class="text-5xl mb-4">${recitationMode ? '📝' : '📖'}</div>
+                        <h2 class="text-3xl font-black text-white mb-2 font-arabic">${currentSurah.name}</h2>
+                        <p class="text-cyan-100 font-arabic">${modeLabel}</p>
+                        <div class="mt-6 bg-white/20 backdrop-blur rounded-2xl p-4">
+                            <div class="text-white text-lg font-bold font-arabic">
+                                ${recitationMode ? `${passedVerses} من ${totalVerses} آيات صحيحة` : `أكملت ${totalVerses} ${totalVerses === 1 ? 'آية' : 'آيات'}`}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // === RECITATION MODE: Verse-by-verse breakdown ===
+                if (recitationMode && verseResults.length > 0) {
+                    html += `
+                        <div class="bg-white rounded-3xl p-8 shadow-xl">
+                            <h2 class="text-2xl font-black text-slate-900 mb-6 font-arabic">📋 تفصيل الآيات</h2>
+                            <div class="space-y-3">
+                    `;
+
+                    verseResults.forEach((result, idx) => {
+                        const statusIcon = result.passed ? '✅' : '❌';
+                        const statusText = result.passed ? 'نجحت' : 'تحتاج مراجعة';
+                        const bgColor = result.passed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+                        const textColor = result.passed ? 'text-green-700' : 'text-red-700';
+
+                        html += `
+                            <div class="flex items-start justify-between ${bgColor} rounded-xl p-4 border">
+                                <div class="flex-1 text-right">
+                                    <div class="quran-text text-lg text-slate-800 mb-2">${result.verse}</div>
+                                    <div class="text-xs text-slate-500">
+                                        أخطأت في ${result.lettersWithErrors} حرف من ${result.totalLetters} حرف
+                                        (${result.errorRate.toFixed(0)}%)
+                                    </div>
+                                </div>
+                                <div class="${textColor} font-bold text-sm whitespace-nowrap mr-4">
+                                    ${statusIcon} ${statusText}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            html += `
+                <!-- Overall Stats -->
+                <div class="bg-white rounded-3xl p-8 shadow-xl">
+                    <h2 class="text-2xl font-black text-slate-900 mb-6 font-arabic">📈 الإحصائيات العامة</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 text-center">
+                            <div class="text-4xl font-black text-blue-600">${totalLetters}</div>
+                            <div class="text-sm text-blue-800 mt-2 font-arabic font-bold">حرف مكتمل</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 text-center">
+                            <div class="text-4xl font-black text-green-600">${accuracy}%</div>
+                            <div class="text-sm text-green-800 mt-2 font-arabic font-bold">نسبة الدقة</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 text-center">
+                            <div class="text-4xl font-black text-red-600">${totalMistakes}</div>
+                            <div class="text-sm text-red-800 mt-2 font-arabic font-bold">عدد الأخطاء</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 text-center">
+                            <div class="text-4xl font-black text-purple-600">${duration}s</div>
+                            <div class="text-sm text-purple-800 mt-2 font-arabic font-bold">الوقت الكلي</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sentence Display -->
+                <div class="bg-gradient-to-br from-emerald-500 to-cyan-600 rounded-3xl p-8 shadow-xl text-center">
+                    <div class="text-white text-sm font-semibold mb-4 font-arabic">${surahMode ? 'آيات السورة' : 'الجملة التي تدربت عليها'}</div>
+                    <div dir="rtl" class="text-5xl font-bold text-white leading-relaxed quran-text">
+                        ${displaySentence}
+                    </div>
+                </div>
+
+                <!-- Performance Rating -->
+                <div class="bg-white rounded-3xl p-8 shadow-xl">
+                    <h2 class="text-2xl font-black text-slate-900 mb-6 font-arabic">⭐ تقييم الأداء</h2>
+                    <div class="flex items-center justify-center gap-6">
+                        ${getPerformanceRating(accuracy)}
+                    </div>
+                </div>
+            `;
+
+            // Most difficult letter
+            if (mostDifficult) {
+                html += `
+                    <div class="bg-white rounded-3xl p-8 shadow-xl">
+                        <h2 class="text-2xl font-black text-slate-900 mb-6 font-arabic">🎯 الحرف الأكثر صعوبة</h2>
+                        <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-8 text-center border-2 border-orange-200">
+                            <div class="text-7xl font-black text-orange-600 mb-4 quran-text">${mostDifficult}</div>
+                            <div class="text-lg text-orange-800 font-arabic font-bold">
+                                ${maxErrors} ${maxErrors === 1 ? 'خطأ' : 'أخطاء'}
+                            </div>
+                            <p class="text-sm text-orange-700 mt-3 font-arabic">ركز على هذا الحرف في التدريبات القادمة</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Letter breakdown
+            html += `
+                <div class="bg-white rounded-3xl p-8 shadow-xl">
+                    <h2 class="text-2xl font-black text-slate-900 mb-6 font-arabic">📝 تفصيل الحروف</h2>
+                    <div class="space-y-3">
+            `;
+
+            for (let letter in letterStats) {
+                const stats = letterStats[letter];
+                const letterAccuracy = stats.correct > 0 ?
+                    ((stats.correct / (stats.correct + stats.wrong)) * 100).toFixed(0) : 0;
+                const avgTime = stats.correct > 0 ? (stats.totalTime / stats.correct / 1000).toFixed(1) : 0;
+
+                html += `
+                    <div class="bg-slate-50 rounded-xl p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="text-3xl font-black text-slate-700 quran-text">${letter}</div>
+                            <div>
+                                <div class="text-sm font-arabic text-slate-600">
+                                    <span class="text-green-600 font-bold">${stats.correct} صحيح</span>
+                                    ${stats.wrong > 0 ? `<span class="text-red-600 font-bold"> • ${stats.wrong} خطأ</span>` : ''}
+                                </div>
+                                <div class="text-xs text-slate-500 font-arabic mt-1">متوسط الوقت: ${avgTime}ث</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="text-2xl font-black ${letterAccuracy >= 80 ? 'text-green-600' : letterAccuracy >= 50 ? 'text-orange-600' : 'text-red-600'}">
+                                ${letterAccuracy}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            // Speed analysis
+            html += `
+                <div class="bg-white rounded-3xl p-8 shadow-xl">
+                    <h2 class="text-2xl font-black text-slate-900 mb-6 font-arabic">⚡ تحليل السرعة</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 rounded-2xl p-6 text-center">
+                            <div class="text-3xl font-black text-blue-600">${avgTimePerLetter}s</div>
+                            <div class="text-sm text-blue-800 mt-2 font-arabic font-bold">متوسط الوقت لكل حرف</div>
+                        </div>
+                        <div class="bg-green-50 rounded-2xl p-6 text-center">
+                            <div class="text-3xl font-black text-green-600">${(totalLetters / (duration || 1) * 60).toFixed(1)}</div>
+                            <div class="text-sm text-green-800 mt-2 font-arabic font-bold">حرف في الدقيقة</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-2xl p-6 text-center">
+                            <div class="text-3xl font-black text-purple-600">${score}</div>
+                            <div class="text-sm text-purple-800 mt-2 font-arabic font-bold">النقاط المكتسبة</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            content.innerHTML = html;
+        }
+
+        function getPerformanceRating(accuracy) {
+            if (accuracy >= 95) {
+                return `
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <div class="text-3xl font-black text-yellow-500 mb-2 font-arabic">ممتاز جداً!</div>
+                        <p class="text-slate-600 font-arabic">أداء رائع! واصل التميز</p>
+                    </div>
+                `;
+            } else if (accuracy >= 80) {
+                return `
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">⭐</div>
+                        <div class="text-3xl font-black text-blue-600 mb-2 font-arabic">جيد جداً</div>
+                        <p class="text-slate-600 font-arabic">أداء مميز! يمكنك تحسينه أكثر</p>
+                    </div>
+                `;
+            } else if (accuracy >= 60) {
+                return `
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">👍</div>
+                        <div class="text-3xl font-black text-green-600 mb-2 font-arabic">جيد</div>
+                        <p class="text-slate-600 font-arabic">أداء مقبول، استمر في التدريب</p>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">💪</div>
+                        <div class="text-3xl font-black text-orange-600 mb-2 font-arabic">يحتاج تحسين</div>
+                        <p class="text-slate-600 font-arabic">لا تقلق! التدريب المستمر هو المفتاح</p>
+                    </div>
+                `;
+            }
+        }
+
+    </script>
+</body>
+
+</html>
+
+</html>
