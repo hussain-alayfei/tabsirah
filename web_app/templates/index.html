@@ -621,14 +621,30 @@
 
                 <!-- Current Word Display (Centered, Big) - Always shown in Surah mode -->
                 <div id="currentWordDisplay" dir="rtl"
-                    class="hidden mb-3 bg-white rounded-xl p-4 shadow-sm border border-slate-200">
-                    <div class="text-xs text-slate-500 mb-2 font-bold text-center font-arabic"
-                        style="font-family: 'Cairo', 'Noto Naskh Arabic', -apple-system, sans-serif;">الكلمة الحالية
+                    class="hidden mb-3 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <div class="text-xs text-slate-500 mb-3 font-bold text-center"
+                        style="font-family: 'Cairo', -apple-system, sans-serif;">الكلمة الحالية</div>
+                    
+                    <!-- Arabic Word Display - Single text element for proper shaping -->
+                    <div class="text-center mb-3">
+                        <span id="currentWordTextArabic" dir="rtl" 
+                            class="text-4xl font-bold text-slate-700"
+                            style="font-family: 'Noto Naskh Arabic', 'Amiri', 'Geeza Pro', -apple-system, sans-serif; line-height: 1.8; letter-spacing: 0;">
+                            <!-- Word inserted here as SINGLE text - no splitting -->
+                        </span>
                     </div>
-                    <div id="currentWordText" dir="rtl"
-                        class="text-4xl font-bold leading-relaxed text-center quran-text"
-                        style="font-family: 'Noto Naskh Arabic', 'Amiri', -apple-system, 'Geeza Pro', 'SF Arabic', system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; letter-spacing: 0;">
-                        <!-- Word with colored letters will be inserted here -->
+                    
+                    <!-- Progress indicator: Shows which letter we're on -->
+                    <div class="flex justify-center items-center gap-1" id="letterProgressDots">
+                        <!-- Dots will be inserted here by JavaScript -->
+                    </div>
+                    
+                    <!-- Current letter indicator -->
+                    <div class="text-center mt-3">
+                        <span class="text-xs text-slate-400">الحرف الحالي:</span>
+                        <span id="currentLetterDisplay" class="text-2xl font-bold text-blue-600 mr-2"
+                            style="font-family: 'Noto Naskh Arabic', 'Amiri', -apple-system, sans-serif;">
+                        </span>
                     </div>
                 </div>
 
@@ -1958,33 +1974,39 @@
             document.getElementById('currentWordDisplay').classList.remove('hidden');
 
             const wordIndex = parseInt(card.getAttribute('data-word-index') || '0');
-            const wordDisplay = document.getElementById('currentWordText');
-
-            // Build word with colored spans - AS ONE CONNECTED WORD
-            const nonConnectors = "اأإآدذرزوؤةى";
-            // Remove bidi-override, keep dir="rtl" and robust font stack
-            let html = '<span dir="rtl" style="display: inline-block; font-family: \'Noto Naskh Arabic\', \'Amiri\', -apple-system, \'Geeza Pro\', \'SF Arabic\', system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; letter-spacing: 0;">';
+            // PROPER ARABIC DISPLAY: Show whole word as single text (keeps letters connected)
+            // Use progress dots and current letter indicator instead of per-letter coloring
+            // This is the ONLY way to guarantee proper Arabic shaping on iOS Safari and all mobile browsers
+            
+            // Display the WHOLE word as single text - this guarantees proper Arabic shaping
+            const wordTextElement = document.getElementById('currentWordTextArabic');
+            wordTextElement.textContent = word;
+            
+            // Display current letter separately (isolated form is OK for single letter display)
+            const currentLetterElement = document.getElementById('currentLetterDisplay');
+            currentLetterElement.textContent = word[wordIndex] || '';
+            
+            // Build progress dots to show which letter we're on
+            const dotsContainer = document.getElementById('letterProgressDots');
+            dotsContainer.innerHTML = '';
+            
             for (let i = 0; i < word.length; i++) {
-                let color;
+                const dot = document.createElement('div');
+                dot.className = 'w-3 h-3 rounded-full transition-all duration-300';
+                
                 if (i < wordIndex) {
-                    color = '#22c55e'; // green-500
+                    // Completed - green
+                    dot.classList.add('bg-green-500');
                 } else if (i === wordIndex) {
-                    color = '#3b82f6'; // blue-600
+                    // Current - blue, larger with ring
+                    dot.classList.add('bg-blue-500', 'w-4', 'h-4', 'ring-4', 'ring-blue-200');
                 } else {
-                    color = '#cbd5e1'; // slate-300
+                    // Remaining - gray
+                    dot.classList.add('bg-slate-300');
                 }
-
-                html += `<span style="color: ${color}; transition: all 0.3s ease; margin: 0; padding: 0;">${word[i]}</span>`;
-
-                // Add ZWJ (Zero Width Joiner) if this letter connects to the next one
-                // This forces the browser to connect the letters across the span boundary
-                if (i < word.length - 1 && !nonConnectors.includes(word[i])) {
-                    html += "&zwj;";
-                }
+                
+                dotsContainer.appendChild(dot);
             }
-            html += '</span>';
-
-            wordDisplay.innerHTML = html;
         }
 
         function updateCardStyles() {
