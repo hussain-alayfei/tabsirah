@@ -1,1 +1,1 @@
-web: gunicorn --chdir web_app --config web_app/gunicorn.conf.py app:app
+web: cd web_app && gunicorn --config gunicorn.conf.py app:app
