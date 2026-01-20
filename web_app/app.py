@@ -122,23 +122,42 @@ def get_sign_image(char):
 @app.route('/predict', methods=['POST'])
 def predict():
     if not classifier:
-        return jsonify({'error': 'Model not loaded'}), 500
-        
+        return jsonify({'error': 'Model not loaded', 'prediction': None, 'landmarks': []}), 200
+    
     try:
-        data = request.json['image']
+        # Check if request has JSON
+        if not request.is_json:
+            return jsonify({'error': 'No JSON data', 'prediction': None, 'landmarks': []}), 200
+            
+        json_data = request.get_json(silent=True)
+        if not json_data or 'image' not in json_data:
+            return jsonify({'error': 'No image data', 'prediction': None, 'landmarks': []}), 200
+            
+        data = json_data['image']
+        
         # Decode base64
         # Data URL format: "data:image/jpeg;base64,/9j/4AAQ..."
         if "," in data:
             header, encoded = data.split(",", 1)
         else:
             encoded = data
+        
+        try:
+            binary = base64.b64decode(encoded)
+        except Exception:
+            return jsonify({'error': 'Invalid base64', 'prediction': None, 'landmarks': []}), 200
             
-        binary = base64.b64decode(encoded)
         image_array = np.frombuffer(binary, dtype=np.uint8)
         frame = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         
         if frame is None:
-             return jsonify({'error': 'Failed to decode image'}), 400
+            return jsonify({'error': 'Failed to decode image', 'prediction': None, 'landmarks': []}), 200
+
+        # Resize image to reduce memory usage (max 640px width)
+        height, width = frame.shape[:2]
+        if width > 640:
+            scale = 640 / width
+            frame = cv2.resize(frame, (640, int(height * scale)))
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
@@ -146,7 +165,7 @@ def predict():
         
         # Serialize landmarks
         landmarks_data = []
-        if detection_result.hand_landmarks:
+        if detection_result and detection_result.hand_landmarks:
             for hand_landmarks in detection_result.hand_landmarks:
                 hand_points = []
                 for landmark in hand_landmarks:
@@ -161,8 +180,8 @@ def predict():
         
         return jsonify(response_data)
     except Exception as e:
-        print(f"Prediction error: {e}")
-        return jsonify({'error': str(e)}), 500
+        # Return valid JSON even on error
+        return jsonify({'error': str(e), 'prediction': None, 'landmarks': []}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
