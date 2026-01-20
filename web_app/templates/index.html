@@ -1990,48 +1990,55 @@
             const centerX = (textWidth + padding * 2) / 2;
             const centerY = 35;
             
-            // Draw the word multiple times with clipping to achieve per-letter coloring
-            // This keeps Arabic shaping intact because we draw the FULL word each time
+            // Draw the word in 3 passes: completed (green), current (blue), remaining (gray)
+            // Each pass clips to its portion of the word - NO OVERLAP
             
-            // Method: Draw full word 3 times, each with different clip region
-            // 1. First, measure approximate letter positions (RTL)
+            // Measure cumulative positions for each letter (RTL)
             const letterWidths = [];
-            let totalWidth = 0;
             for (let i = 0; i < word.length; i++) {
-                const w = ctx.measureText(word[i]).width;
-                letterWidths.push(w);
-                totalWidth += w;
+                letterWidths.push(ctx.measureText(word[i]).width);
             }
             
-            // Calculate starting X position (RTL - start from right)
-            const startX = centerX + totalWidth / 2;
+            // Calculate total width and positions
+            const totalMeasuredWidth = letterWidths.reduce((a, b) => a + b, 0);
+            const scale = textWidth / totalMeasuredWidth; // Adjust for kerning
             
-            // Draw each section with clipping
-            let currentX = startX;
+            // Calculate boundaries for each section (RTL: right to left)
+            const rightEdge = centerX + textWidth / 2;
+            const leftEdge = centerX - textWidth / 2;
             
+            // Calculate exact X position for each letter boundary
+            const letterBoundaries = [rightEdge];
+            let pos = rightEdge;
             for (let i = 0; i < word.length; i++) {
+                pos -= letterWidths[i] * scale;
+                letterBoundaries.push(pos);
+            }
+            
+            // Draw 3 sections with precise clipping (no overlap)
+            const sections = [
+                { start: 0, end: wordIndex, color: '#22c55e' },      // Completed - green
+                { start: wordIndex, end: wordIndex + 1, color: '#3b82f6' }, // Current - blue
+                { start: wordIndex + 1, end: word.length, color: '#cbd5e1' } // Remaining - gray
+            ];
+            
+            for (const section of sections) {
+                if (section.start >= section.end || section.start >= word.length) continue;
+                
                 ctx.save();
                 
-                // Create clip region for this letter
-                const letterWidth = letterWidths[i];
+                // Calculate clip region for this section (exact boundaries, no overlap)
+                const clipRight = letterBoundaries[section.start];
+                const clipLeft = letterBoundaries[Math.min(section.end, word.length)];
+                
                 ctx.beginPath();
-                ctx.rect(currentX - letterWidth - 2, 0, letterWidth + 4, canvas.height);
+                ctx.rect(clipLeft, 0, clipRight - clipLeft, canvas.height / dpr);
                 ctx.clip();
                 
-                // Set color based on progress
-                if (i < wordIndex) {
-                    ctx.fillStyle = '#22c55e'; // green - completed
-                } else if (i === wordIndex) {
-                    ctx.fillStyle = '#3b82f6'; // blue - current
-                } else {
-                    ctx.fillStyle = '#cbd5e1'; // gray - remaining
-                }
-                
-                // Draw the FULL word (clipping shows only this letter's portion)
+                // Draw the FULL word (clipping shows only this section)
                 ctx.fillText(word, centerX, centerY);
                 
                 ctx.restore();
-                currentX -= letterWidth;
             }
         }
 
