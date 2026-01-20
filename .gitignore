@@ -31,22 +31,58 @@ ENV/
 .vscode/
 *.swp
 *.swo
+*.code-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Jupyter
 .ipynb_checkpoints/
+*.ipynb
 
 # Dataset (too large for Git - keep models, exclude raw images)
 dataset/Lettres_sign_ar/
+dataset/*.csv
 
 # Processed data (can be regenerated)
 data_processed/
 
 # Logs
 *.log
+logs/
+
+# Development scripts (not needed for production)
+src/1_download_data.py
+src/2_verify_mapping.py
+src/5_update_app.py
+src/sync_images.py
+copy_signs.py
+verify_images.py
+*.bat
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Environment variables
+.env
+.env.local
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Testing
+.pytest_cache/
+.tox/
 
 # NOTE: models/ folder is NOT ignored - it's needed for deployment
 # NOTE: web_app/static/signs/ is NOT ignored - sign images are needed
+# NOTE: Keep src/3_process_data.py and src/4_train_model.py for retraining
