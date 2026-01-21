@@ -197,7 +197,7 @@ We welcome contributions! Here's how:
    - Make your changes
    - Submit a pull request
 
-See [COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md#15-contributing) for detailed guidelines.
+See [CONTRIBUTING.md](md_files/CONTRIBUTING.md) for detailed guidelines.
 
 ---
 

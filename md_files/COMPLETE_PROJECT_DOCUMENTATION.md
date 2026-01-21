@@ -1,7 +1,7 @@
 # 📖 Tabsirah (تطبيق تبصرة) - Complete Project Documentation
 
-**Version:** 2.0  
-**Last Updated:** January 2026  
+**Version:** 2.1  
+**Last Updated:** January 22, 2026  
 **Status:** Production Ready
 
 ---
@@ -12,7 +12,7 @@
 2. [Features & Capabilities](#2-features--capabilities)
 3. [Technical Architecture](#3-technical-architecture)
 4. [Technology Stack](#4-technology-stack)
-5. [Data Pipeline & AI Model](#5-data-pipeline--ai-model)
+5. [AI Model & Inference](#5-ai-model--inference-logic)
 6. [Frontend Architecture](#6-frontend-architecture)
 7. [Backend Architecture](#7-backend-architecture)
 8. [Design System](#8-design-system)
@@ -216,120 +216,49 @@ numpy<2
 
 ---
 
-## 5. Data Pipeline & AI Model
+## 5. AI Model & Inference Logic
 
-### 5.1 Dataset Structure
+### 5.1 Model Architecture
 
-```
-dataset/
-├── class_mapping.csv          # Maps Class_ID → Arabic_Letter
-└── Lettres_sign_ar/
-    ├── 0/                     # ا (Alef)
-    │   ├── img_001.jpg
-    │   ├── img_002.jpg
-    │   └── ... (200 images)
-    ├── 1/                     # ب (Ba)
-    ├── 2/                     # ت (Ta)
-    ...
-    └── 29/                    # لا (Lam-Alef)
-```
+#### Components
+- **Hand Detection**: MediaPipe Hand Landmarker (Google)
+- **Feature Extraction**: Custom normalization logic
+- **Classification**: Random Forest Classifier (scikit-learn)
 
-**Total Classes**: 30  
-**Images per Class**: ~200  
-**Total Images**: ~6,000
+### 5.2 Feature Extraction Pipeline (`web_app/inference_classifier.py`)
 
-### 5.2 Class Mapping (`class_mapping.csv`)
-```csv
-Class_ID,Arabic_Letter
-0,ا
-1,ب
-2,ت
-...
-28,ة
-29,لا
-```
+The model does NOT use raw pixel data. It uses geometric relationships between hand landmarks.
 
-### 5.3 Data Processing Pipeline (`src/3_process_data.py`)
+#### Step 1: Hand Detection
+- Input: RGB Frame
+- Output: 21 Landmarks (x, y, z coordinates)
 
-#### Step 1: Parallel Image Processing
-- Uses `ProcessPoolExecutor` for multi-core processing
-- Initializes MediaPipe detector in each worker process
+#### Step 2: Normalization (Crucial)
+To make the model robust to camera distance and hand size, we use a specific normalization technique:
+1.  **Anchor to Wrist**: Subtract the wrist coordinate (Landmark 0) from all points.
+    *   `P_new = P - P_wrist`
+2.  **Scale Invariance**: Calculate the Euclidean distance between the wrist and the Middle Finger Tip (Landmark 12).
+    *   `Scale = Distance(Wrist, Middle_Tip)`
+3.  **Normalize**: Divide all coordinates by this scale factor.
+    *   `P_final_x = P_new_x / Scale`
+    *   `P_final_y = P_new_y / Scale`
 
-#### Step 2: Feature Extraction
-```python
-for each image:
-    1. Load image with OpenCV
-    2. Convert BGR → RGB
-    3. Detect hand landmarks using MediaPipe
-    4. Extract 21 landmarks (x, y coordinates)
-    5. Normalize coordinates (relative to bounding box):
-       - normalized_x = landmark_x - min(all_x)
-       - normalized_y = landmark_y - min(all_y)
-    6. Flatten to 42-feature vector [x0, y0, x1, y1, ..., x20, y20]
-```
+ This ensures that whether the hand is close to the camera (large) or far away (small), the numerical features represented to the model are identical.
 
-#### Step 3: Save Processed Data
-- Output: `data_processed/data_arabic.pickle`
-- Structure: `{'data': [...], 'labels': [...]}`
+#### Step 3: Feature Vector
+- The final input to the classifier is a flattened vector of 42 values:
+- `[x0, y0, ..., x20, y20]` (Normalized)
 
-### 5.4 Model Training (`src/4_train_model.py`)
+### 5.3 The Classifier
+- **File**: `models/model_normalized_augmented_LGM.p`
+- **Type**: Random Forest Classifier
+- **Classes**: 30 Arabic Sign Language Classes (Letters + combinations)
 
-#### Algorithm: Random Forest Classifier
-- **Ensemble Method**: Combines multiple decision trees
-- **Advantages**: 
-  - High accuracy on structured data
-  - Robust to overfitting
-  - Fast prediction
-  - Handles non-linear relationships
+**Why Random Forest?**
+- Fast inference time (<10ms)
+- Robust to noise
+- Excellent performance on tabular/geometric data
 
-#### Training Process
-```python
-1. Load pickle file (features + labels)
-2. Split data:
-   - Training: 80%
-   - Testing: 20%
-   - Stratified split (maintains class distribution)
-3. Train Random Forest:
-   - n_estimators=200 (200 decision trees)
-   - n_jobs=-1 (use all CPU cores)
-4. Evaluate on test set
-5. Save model to models/model_arabic.p
-```
-
-#### Expected Performance
-- **Accuracy**: >95% on test set
-- **Inference Time**: <50ms per prediction
-
-### 5.5 How to Train on New Data
-
-#### Scenario 1: Adding More Samples to Existing Classes
-1. Add images to respective folder (e.g., `dataset/Lettres_sign_ar/0/`)
-2. Run processing:
-   ```bash
-   python src/3_process_data.py
-   ```
-3. Retrain model:
-   ```bash
-   python src/4_train_model.py
-   ```
-4. Restart Flask app
-
-#### Scenario 2: Adding New Classes
-1. Create new folder (e.g., `30/` for a new letter)
-2. Add images to the folder
-3. Update `dataset/class_mapping.csv`:
-   ```csv
-   30,ء
-   ```
-4. Update `inference_classifier.py` → Add to `labels_dict`:
-   ```python
-   self.labels_dict = {
-       ...
-       30: 'ء'
-   }
-   ```
-5. Run processing and training scripts
-6. Add sign image to `web_app/static/signs/ء.jpg`
 
 ---
 
@@ -562,13 +491,15 @@ classifier = SignLanguageClassifier()
 class SignLanguageClassifier:
     def __init__(self):
         # Load Random Forest model
-        self.model = pickle.load('models/model_arabic.p')
+        # Updated to use the consistent normalized model
+        model_path = os.path.join(base_dir, 'models', 'model_normalized_augmented_LGM.p')
+        
+        with open(model_path, 'rb') as f:
+            self.model_dict = pickle.load(f)
+        self.model = self.model_dict['model']
         
         # Initialize MediaPipe Hand Landmarker
-        self.detector = vision.HandLandmarker.create_from_options(
-            min_hand_detection_confidence=0.3,
-            num_hands=1
-        )
+        self.detector = vision.HandLandmarker.create_from_options(...)
         
         # Arabic labels mapping
         self.labels_dict = {0: 'ا', 1: 'ب', ...}
@@ -584,14 +515,8 @@ def predict(self, frame_rgb):
         # Extract first hand
         hand = results.hand_landmarks[0]
         
-        # Normalize coordinates
-        x_coords = [lm.x for lm in hand]
-        y_coords = [lm.y for lm in hand]
-        
-        features = []
-        for lm in hand:
-            features.append(lm.x - min(x_coords))
-            features.append(lm.y - min(y_coords))
+        # Extract features using Wrist-Anchor + Middle-Finger-Scale Normalization
+        features = self._preprocess_landmarks(hand)
         
         # Predict
         prediction = self.model.predict([features])
@@ -1942,21 +1867,18 @@ python -m pytest tests/
 
 ```
 tabsirah/
-├── dataset/              # Training data
-├── data_processed/       # Processed features
-├── models/               # Trained models
-├── src/                  # Training scripts
-│   ├── 3_process_data.py
-│   └── 4_train_model.py
-├── web_app/              # Main application
+├── md_files/             # Project documentation
+├── models/               # Trained AI models
+│   ├── hand_landmarker.task   # MediaPipe model
+│   └── model_normalized_augmented_LGM.p # Main classifier
+├── web_app/              # Main Flask application
 │   ├── app.py            # Flask server
-│   ├── inference_classifier.py  # AI model
-│   ├── surah_data.py     # Quran content
-│   ├── static/           # CSS, JS, Images
-│   └── templates/        # HTML files
-├── tests/                # Unit tests
+│   ├── inference_classifier.py  # AI inference
+│   ├── surah_data.py     # Quranic content
+│   ├── static/           # Sign images & assets
+│   └── templates/        # HTML templates
 ├── requirements.txt      # Python dependencies
-└── README.md             # Project overview
+└── README.md            # Project entry pointProject overview
 ```
 
 ---

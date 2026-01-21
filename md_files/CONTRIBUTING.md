@@ -43,12 +43,23 @@ python app.py
 ```
 
 ### Branching Strategy
-```
+We use a structured git flow:
+
+| Branch | Purpose | Base | Merge To |
+|--------|---------|------|----------|
+| `main` | Production-ready code | - | - |
+| `develop` | Integration & Development | `main` | `main` |
+| `feature/*` | New features | `develop` | `develop` |
+| `bugfix/*` | Bug fixes | `develop` | `develop` |
+| `hotfix/*` | Critical production fixes | `main` | `main` & `develop` |
+
+```bash
 main (production)
-  ├── develop (integration)
-  │   ├── feature/your-feature-name
-  │   ├── bugfix/issue-number-description
-  │   └── hotfix/critical-fix
+  ↓
+develop (integration)
+  ├── feature/your-feature-name
+  ├── bugfix/issue-description
+  └── hotfix/critical-fix
 ```
 
 ### Making Changes
