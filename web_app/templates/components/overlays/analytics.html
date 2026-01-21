@@ -1,0 +1,30 @@
+<!-- ANALYTICS OVERLAY -->
+<div id="analyticsOverlay"
+    class="fixed inset-0 z-[170] hidden bg-gradient-to-br from-slate-900 to-slate-800 overflow-y-auto">
+    <div class="min-h-screen py-8 px-4">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-black text-white mb-2 font-arabic">📊 تحليل الأداء</h1>
+                <p class="text-slate-300 font-arabic">تقرير مفصل عن جلستك التدريبية</p>
+            </div>
+
+            <!-- Analytics Content -->
+            <div id="analyticsContent" class="space-y-6">
+                <!-- Will be filled by JavaScript -->
+            </div>
+
+            <!-- Close Button -->
+            <div class="text-center mt-8 flex gap-4 justify-center">
+                <button onclick="closeAnalytics(); restartGame();"
+                    class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg font-arabic">
+                    تدريب جديد
+                </button>
+                <button onclick="closeAnalytics()"
+                    class="px-8 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all shadow-lg font-arabic">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

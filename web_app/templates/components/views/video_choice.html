@@ -1,0 +1,95 @@
+<!-- VIDEO CHOICE VIEW -->
+<div id="videoChoiceView"
+    class="fixed inset-0 z-[110] w-full h-full bg-white hidden flex items-center justify-center p-6 view-transition">
+
+    <!-- Background Decoration -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2">
+        </div>
+        <div
+            class="absolute bottom-0 left-0 w-64 h-64 bg-cyan-50 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2">
+        </div>
+    </div>
+
+    <div
+        class="max-w-sm w-full bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 p-8 text-center relative z-10 border border-slate-50 animate-fade-in-up">
+        <!-- Surah Badge -->
+        <div class="inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full mb-6">
+            <span class="text-blue-600">📖</span>
+            <span class="text-blue-900 font-black font-arabic text-sm" id="videoChoiceTitle">سورة الكوثر</span>
+        </div>
+
+        <!-- Question -->
+        <h2 class="text-xl font-black text-slate-800 mb-3 font-arabic">كيف تود البدء؟</h2>
+        <p class="text-slate-500 text-sm font-bold font-arabic mb-8">اختر الطريقة التي تفضلها للتعلم</p>
+
+        <!-- Choice Cards (Buttons) -->
+        <div class="grid grid-cols-1 gap-3">
+            <!-- Option 1: Watch Video (YouTube Style) -->
+            <button onclick="showVideoPlayer()"
+                class="group relative w-full h-24 rounded-2xl overflow-hidden shadow-xl shadow-red-600/20 transition-all duration-300 hover:scale-[1.02] active:scale-95 text-right bg-white border border-slate-100">
+
+                <div class="absolute inset-0 flex items-center justify-between px-6 z-10">
+                    <!-- Text Content -->
+                    <div class="flex-1 pl-4 flex flex-col items-end">
+                        <h3
+                            class="text-xl font-black text-slate-800 mb-1.5 font-arabic group-hover:text-[#FF0000] transition-colors">
+                            مشاهدة الشرح</h3>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="bg-[#FF0000] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">YouTube</span>
+                            <p class="text-slate-400 text-xs font-bold font-arabic">شرح تفاعلي من المعلم</p>
+                        </div>
+                    </div>
+
+                    <!-- Icon Box (Brand Red) -->
+                    <div
+                        class="w-14 h-14 bg-[#FF0000] rounded-full flex items-center justify-center text-white shadow-lg shadow-red-500/30 shrink-0 group-hover:scale-110 transition-transform duration-300">
+                        <!-- YouTube Play Icon -->
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Subtle pattern/glow -->
+                <div
+                    class="absolute -left-10 top-1/2 -translate-y-1/2 w-32 h-32 bg-red-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                </div>
+            </button>
+
+            <!-- Option 2: Direct Training (Practice Style - Green/Teal) -->
+            <button onclick="startDirectTraining()"
+                class="group relative w-full h-20 rounded-2xl overflow-hidden shadow-lg shadow-teal-500/10 transition-transform active:scale-95 text-right">
+                <!-- Gradient Background -->
+                <div class="absolute inset-0 bg-gradient-to-l from-teal-500 to-emerald-600"></div>
+
+                <div class="absolute inset-0 flex items-center justify-between px-5 z-10">
+                    <!-- Text Content -->
+                    <div class="flex-1 pl-3">
+                        <h3 class="text-lg font-black text-white mb-1 font-arabic">بدء التدريب</h3>
+                        <p class="text-teal-100 text-[10px] font-bold font-arabic opacity-90">اختبر نفسك مباشرة
+                            بالذكاء الاصطناعي</p>
+                    </div>
+
+                    <!-- Icon Box -->
+                    <div
+                        class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/10 shrink-0 transition-transform group-hover:scale-110 duration-500">
+                        <!-- Practice/Brain Icon -->
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                </div>
+            </button>
+        </div>
+
+        <!-- Cancel Button -->
+        <button onclick="backToSurahSelection()"
+            class="mt-8 text-slate-400 hover:text-slate-600 text-sm font-bold font-arabic transition-colors">
+            إلغاء والعودة
+        </button>
+    </div>
+</div>
