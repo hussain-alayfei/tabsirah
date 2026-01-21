@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>تطبيق تبصرة</title>
 
-    <!-- FONTS: Zain (Main Arabic) + Amiri (Quranic Text Only) -->
+    <!-- FONTS: Cairo (Main Arabic) + Noto Naskh Arabic (Quranic Text - iOS Compatible) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Amiri:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap"
         rel="stylesheet">
 
     <!-- TAILWIND CSS -->
@@ -22,7 +22,7 @@
                     fontFamily: {
                         sans: ['Cairo', 'Tahoma', 'Arial', 'sans-serif'],
                         arabic: ['Cairo', 'Tahoma', 'Arial', 'sans-serif'],
-                        quran: ['Amiri', 'Arabic Typesetting', 'Traditional Arabic', 'serif'],
+                        quran: ['Noto Naskh Arabic', 'Amiri', '-apple-system', 'Geeza Pro', 'SF Arabic', 'system-ui', 'sans-serif'],
                     },
                     colors: {
                         tabsira: {
@@ -52,10 +52,14 @@
             font-family: 'Cairo', 'Tahoma', 'Arial', sans-serif !important;
         }
 
-        /* خط القرآن الكريم للنصوص القرآنية فقط */
+        /* خط القرآن الكريم للنصوص القرآنية فقط - iOS Compatible */
         .font-quran,
         .quran-text {
-            font-family: 'Amiri', 'Arabic Typesetting', 'Traditional Arabic', serif !important;
+            font-family: 'Noto Naskh Arabic', 'Amiri', -apple-system, 'Geeza Pro', 'SF Arabic', system-ui, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            font-feature-settings: "liga" 1, "calt" 1;
         }
 
         .glass-panel {
@@ -618,12 +622,9 @@
                 <!-- Current Word Display (Centered, Big) - Always shown in Surah mode -->
                 <div id="currentWordDisplay"
                     class="hidden mb-3 text-center bg-white rounded-xl p-3 shadow-sm border border-slate-200">
-                    <div class="text-[10px] text-slate-500 mb-1 font-semibold tracking-wider uppercase">الكلمة الحالية
-                    </div>
-                    <div id="currentWordText" dir="rtl" class="text-4xl font-bold leading-relaxed quran-text"
-                        style="font-family: 'Amiri', serif;">
-                        <!-- Word with colored letters will be inserted here -->
-                    </div>
+                    <div class="text-[10px] text-slate-500 mb-1 font-semibold">الكلمة الحالية</div>
+                    <!-- Canvas for Arabic word with colored letters - keeps connections intact -->
+                    <canvas id="arabicWordCanvas" class="mx-auto" style="max-width: 100%;"></canvas>
                 </div>
 
                 <!-- Cards Track (Scrolling) - Hidden in Recitation Mode -->
@@ -1393,8 +1394,25 @@
         }
 
         function startCamera() {
+            // Detect if mobile device
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            // Use different constraints for mobile vs desktop
+            // Mobile: Request vertical resolution to match UI aspect ratio (9:16)
+            // This prevents excessive cropping (zooming) when fitting a landscape video into a portrait container
+            const videoConstraints = isMobile ? {
+                facingMode: "user",
+                width: { ideal: 720 },
+                height: { ideal: 1280 }, // Request vertical orientation
+                frameRate: { ideal: 30 }
+            } : {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                frameRate: { ideal: 60 }
+            };
+
             navigator.mediaDevices.getUserMedia({
-                video: { width: 1280, height: 720, frameRate: { ideal: 60 } }
+                video: videoConstraints
             }).then((stream) => {
                 video.srcObject = stream;
                 video.addEventListener("loadeddata", predictWebcam);
@@ -1935,25 +1953,96 @@
             document.getElementById('currentWordDisplay').classList.remove('hidden');
 
             const wordIndex = parseInt(card.getAttribute('data-word-index') || '0');
-            const wordDisplay = document.getElementById('currentWordText');
-
-            // Build word with colored spans - AS ONE CONNECTED WORD
-            let html = '<span dir="rtl" style="display: inline-block; font-family: \'Amiri\', \'Arabic Typesetting\', \'Traditional Arabic\', serif;">';
+            
+            // CANVAS APPROACH: Render Arabic word with colored letters while keeping connections
+            // Canvas draws the text as a bitmap, preserving Arabic shaping on ALL devices including iOS
+            const canvas = document.getElementById('arabicWordCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set up canvas with high DPI for sharp text
+            const dpr = window.devicePixelRatio || 1;
+            const fontSize = 42;
+            const fontFamily = "'Noto Naskh Arabic', 'Geeza Pro', 'SF Arabic', -apple-system, sans-serif";
+            
+            // Measure text width first
+            ctx.font = `bold ${fontSize}px ${fontFamily}`;
+            const textMetrics = ctx.measureText(word);
+            const textWidth = textMetrics.width;
+            
+            // Set canvas size
+            const padding = 20;
+            canvas.width = (textWidth + padding * 2) * dpr;
+            canvas.height = 70 * dpr;
+            canvas.style.width = (textWidth + padding * 2) + 'px';
+            canvas.style.height = '70px';
+            ctx.scale(dpr, dpr);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set text properties
+            ctx.font = `bold ${fontSize}px ${fontFamily}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.direction = 'rtl';
+            
+            // Calculate center position
+            const centerX = (textWidth + padding * 2) / 2;
+            const centerY = 35;
+            
+            // Draw the word in 3 passes: completed (green), current (blue), remaining (gray)
+            // Each pass clips to its portion of the word - NO OVERLAP
+            
+            // Measure cumulative positions for each letter (RTL)
+            const letterWidths = [];
             for (let i = 0; i < word.length; i++) {
-                let color;
-                if (i < wordIndex) {
-                    color = '#22c55e'; // green-500
-                } else if (i === wordIndex) {
-                    color = '#3b82f6'; // blue-600
-                } else {
-                    color = '#cbd5e1'; // slate-300
-                }
-                // IMPORTANT: No spaces between letters - Arabic will connect naturally
-                html += `<span style="color: ${color}; transition: all 0.3s ease;">${word[i]}</span>`;
+                letterWidths.push(ctx.measureText(word[i]).width);
             }
-            html += '</span>';
-
-            wordDisplay.innerHTML = html;
+            
+            // Calculate total width and positions
+            const totalMeasuredWidth = letterWidths.reduce((a, b) => a + b, 0);
+            const scale = textWidth / totalMeasuredWidth; // Adjust for kerning
+            
+            // Calculate boundaries for each section (RTL: right to left)
+            const rightEdge = centerX + textWidth / 2;
+            const leftEdge = centerX - textWidth / 2;
+            
+            // Calculate exact X position for each letter boundary
+            const letterBoundaries = [rightEdge];
+            let pos = rightEdge;
+            for (let i = 0; i < word.length; i++) {
+                pos -= letterWidths[i] * scale;
+                letterBoundaries.push(pos);
+            }
+            
+            // Draw 3 sections with precise clipping (no overlap)
+            const sections = [
+                { start: 0, end: wordIndex, color: '#22c55e' },      // Completed - green
+                { start: wordIndex, end: wordIndex + 1, color: '#3b82f6' }, // Current - blue
+                { start: wordIndex + 1, end: word.length, color: '#cbd5e1' } // Remaining - gray
+            ];
+            
+            for (const section of sections) {
+                if (section.start >= section.end || section.start >= word.length) continue;
+                
+                ctx.save();
+                
+                // Calculate clip region for this section (exact boundaries, no overlap)
+                const clipRight = letterBoundaries[section.start];
+                const clipLeft = letterBoundaries[Math.min(section.end, word.length)];
+                
+                ctx.beginPath();
+                ctx.rect(clipLeft, 0, clipRight - clipLeft, canvas.height / dpr);
+                ctx.clip();
+                
+                // Set the color for this section
+                ctx.fillStyle = section.color;
+                
+                // Draw the FULL word (clipping shows only this section)
+                ctx.fillText(word, centerX, centerY);
+                
+                ctx.restore();
+            }
         }
 
         function updateCardStyles() {
