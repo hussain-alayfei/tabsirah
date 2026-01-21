@@ -16,6 +16,12 @@ You wanted **TWO versions** of your codebase:
 ```
 main branch
 ├── Core application (web_app/)
+└── ...
+
+### `master` Branch (Legacy/Active Production)
+* **Status**: Currently active local branch.
+* **Contains**: Recent UI fixes and hotfixes (ahead of `main`).
+* **Note**: Should eventually be merged into `develop` and `main` to unify history.
 ├── Training scripts (src/3_process_data.py, src/4_train_model.py)
 ├── Models (models/)
 ├── Documentation
@@ -250,6 +256,11 @@ develop (development)
 ```bash
 # See current branch
 git branch
+
+# Output:
+#   main
+#   develop
+# * master  ← You are likely here (active hotfix/legacy branch)
 
 # Output:
 #   main

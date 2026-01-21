@@ -19,8 +19,9 @@ develop (integration)
 
 | Branch Type | Naming | Purpose | Base Branch | Merge To |
 |------------|---------|---------|-------------|----------|
-| **main** | `main` | Production-ready code | - | - |
-| **develop** | `develop` | Integration branch | `main` | `main` |
+| **main** | `main` | Production-ready code (Deployment) | - | - |
+| **master** | `master` | Legacy/Active Production (Recent Fixes) | - | `main`, `develop` |
+| **develop** | `develop` | Integration branch | `main`, `master` | `main` |
 | **feature** | `feature/description` | New features | `develop` | `develop` |
 | **bugfix** | `bugfix/description` | Bug fixes | `develop` | `develop` |
 | **hotfix** | `hotfix/description` | Critical production fixes | `main` | `main` + `develop` |
