@@ -5,13 +5,14 @@ import numpy as np
 import os
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from constants import ARABIC_LABELS
 
 
 class SignLanguageClassifier:
     def __init__(self):
         # Paths relative to web_app/ folder
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # ArASL_Project root
-        model_path = os.path.join(base_dir, 'models', 'model_normalized_augmented_LGM.p')
+        model_path = os.path.join(base_dir, 'models', 'lighGBM_model.p')
         task_path = os.path.join(base_dir, 'models', 'hand_landmarker.task')
 
         if not os.path.exists(model_path):
@@ -32,38 +33,7 @@ class SignLanguageClassifier:
         self.detector = vision.HandLandmarker.create_from_options(options)
 
         # ARABIC LABELS MAP
-        self.labels_dict = {
-            0: 'ا',
-            1: 'ب',
-            2: 'ت',
-            3: 'ث',
-            4: 'ج',
-            5: 'ح',
-            6: 'خ',
-            7: 'د',
-            8: 'ذ',
-            9: 'ر',
-            10: 'ز',
-            11: 'س',
-            12: 'ش',
-            13: 'ص',
-            14: 'ض',
-            15: 'ط',
-            16: 'ظ',
-            17: 'ع',
-            18: 'غ',
-            19: 'ف',
-            20: 'ق',
-            21: 'ك',
-            22: 'ل',
-            23: 'م',
-            24: 'ن',
-            25: 'ه',
-            26: 'و',
-            27: 'ي',
-            28: 'ة',
-            29: 'لا',
-        }
+        self.labels_dict = ARABIC_LABELS
 
     # -------- NEW: same normalization as training --------
     def _preprocess_landmarks(self, hand_landmarks):

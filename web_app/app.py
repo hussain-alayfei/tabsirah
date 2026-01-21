@@ -1,10 +1,19 @@
+import os
+import warnings
+
+# Suppress annoying warnings BEFORE importing other libraries
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['GLOG_minloglevel'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' # Suppress TensorFlow INFO/WARNING
+warnings.filterwarnings("ignore", category=UserWarning, module='google.protobuf')
+warnings.filterwarnings("ignore", message=".*'force_all_finite' was renamed to 'ensure_all_finite'.*")
+
 from flask import Flask, render_template, request, jsonify, send_file, abort
 from inference_classifier import SignLanguageClassifier
 from surah_data import get_all_surahs, get_surah, is_surah_unlocked
 import cv2
 import numpy as np
 import base64
-import os
 import glob
 from urllib.parse import unquote
 import re
@@ -183,4 +192,5 @@ def predict():
 
 
 if __name__ == '__main__':
+    print("\n✅ Server is ready! Access it at: http://127.0.0.1:5000/")
     app.run(debug=True)
