@@ -16,7 +16,7 @@ export const state = {
     // Game Props
     lastVideoTime: -1,
     lastPredictionTime: 0,
-    PREDICTION_INTERVAL: 150,
+    PREDICTION_INTERVAL: 100,
 
     targetSentence: "",
     currentTargetIndex: 0,
