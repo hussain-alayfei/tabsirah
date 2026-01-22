@@ -4,4 +4,4 @@ scikit-learn
 flask
 gunicorn
 numpy==1.26.4
-python=3.11.10
+
