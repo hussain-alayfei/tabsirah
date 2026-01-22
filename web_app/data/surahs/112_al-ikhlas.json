@@ -1,0 +1,15 @@
+{
+    "id": "al-ikhlas",
+    "name": "سورة الإخلاص",
+    "name_english": "Al-Ikhlas",
+    "number": 112,
+    "verses": [
+        "قل هو الله أحد",
+        "الله الصمد",
+        "لم يلد ولم يولد",
+        "ولم يكن له كفوا أحد"
+    ],
+    "unlocked": true,
+    "video_url": "https://www.youtube.com/embed/65zV7o0C2BM",
+    "description": "سورة مكية، عدد آياتها 4"
+}

@@ -1,0 +1,102 @@
+/* تطبيق الخط العربي الرئيسي (Cairo/ZAIN) على الموقع */
+* {
+    font-family: 'Cairo', 'Tahoma', 'Arial', sans-serif !important;
+}
+
+body {
+    background-color: #ffffff;
+    color: #1e293b;
+    font-family: 'Cairo', 'Tahoma', 'Arial', sans-serif !important;
+}
+
+/* خط القرآن الكريم للنصوص القرآنية فقط - iOS Compatible */
+.font-quran,
+.quran-text {
+    font-family: 'Noto Naskh Arabic', 'Amiri', -apple-system, 'Geeza Pro', 'SF Arabic', system-ui, sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "liga" 1, "calt" 1;
+}
+
+.glass-panel {
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+#videoElement {
+    /* transform: scaleX(-1); MOVED TO INLINE CLASS */
+    /* object-fit: cover; Ensured via utility class */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Smooth fade transition */
+.fade-enter {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.fade-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+/* Entry Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-1 {
+    animation-delay: 0.1s;
+    opacity: 0;
+}
+
+.stagger-2 {
+    animation-delay: 0.2s;
+    opacity: 0;
+}
+
+.stagger-3 {
+    animation-delay: 0.3s;
+    opacity: 0;
+}
+
+.stagger-4 {
+    animation-delay: 0.4s;
+    opacity: 0;
+}
+
+/* View Switching Animation */
+.view-transition {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.view-hidden {
+    opacity: 0;
+    transform: scale(0.98);
+    pointer-events: none;
+}
+
+.view-visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}

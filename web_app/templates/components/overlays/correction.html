@@ -1,0 +1,31 @@
+<!-- CORRECTION OVERLAY (Recitation Mode - After max errors) -->
+<div id="correctionOverlay"
+    class="fixed inset-0 z-[210] bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-6">
+    <div class="bg-white rounded-[2.5rem] p-8 max-w-sm w-full text-center shadow-2xl animate-fade-in-up">
+        <!-- Error Badge -->
+        <div class="inline-flex items-center gap-2 bg-red-50 px-4 py-2 rounded-full mb-4">
+            <span class="text-red-500">⚠️</span>
+            <span id="errorCountBadge" class="text-red-700 font-bold font-arabic text-sm">حاولت 10 مرات</span>
+        </div>
+
+        <h2 class="text-xl font-black text-slate-800 mb-6 font-arabic">الإشارة الصحيحة هي:</h2>
+
+        <!-- Correct Sign Image -->
+        <div class="bg-slate-50 rounded-2xl p-6 mb-6 border-2 border-slate-100">
+            <img id="correctSignImage" src="" alt="الإشارة الصحيحة" class="w-40 h-40 mx-auto object-contain mb-4" />
+            <div id="correctLetterDisplay" class="text-5xl font-black text-blue-600 quran-text"></div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="grid grid-cols-1 gap-3">
+            <button id="btnSkipLetter"
+                class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold font-arabic hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg">
+                فهمت، أكمل التسميع
+            </button>
+            <button id="btnRetryLetter"
+                class="w-full py-3 bg-slate-100 text-slate-700 rounded-xl font-bold font-arabic hover:bg-slate-200 transition-all">
+                أعد المحاولة
+            </button>
+        </div>
+    </div>
+</div>

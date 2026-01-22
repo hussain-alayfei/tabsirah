@@ -1,0 +1,15 @@
+{
+    "id": "quraysh",
+    "name": "سورة قريش",
+    "name_english": "Quraysh",
+    "number": 106,
+    "verses": [
+        "لإيلاف قريش",
+        "إيلافهم رحلة الشتاء والصيف",
+        "فليعبدوا رب هذا البيت",
+        "الذي أطعمهم من جوع وآمنهم من خوف"
+    ],
+    "unlocked": true,
+    "video_url": "https://www.youtube.com/embed/M2O8B-Fv9Hw",
+    "description": "سورة مكية، عدد آياتها 4"
+}

@@ -1,0 +1,110 @@
+<!-- MAIN APP VIEW (Hidden by default) -->
+<div id="appView" class="fixed inset-0 z-[100] w-full h-full bg-white hidden flex-col">
+
+    <!-- App Header -->
+    <header
+        class="bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between z-40 sticky top-0">
+        <button id="btnCloseApp" class="p-2 rounded-full hover:bg-slate-100 text-slate-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        <h1 class="text-lg font-bold text-slate-800">التدريب المباشر</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 max-w-2xl mx-auto w-full">
+
+        <!-- Video Stage - Vertical Large -->
+        <section
+            class="relative w-full max-w-xl mx-auto aspect-[9/16] bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/10 border-4 border-white">
+            <div id="cameraWrapper" class="absolute inset-0 w-full h-full bg-black">
+                <video id="videoElement" autoplay playsinline
+                    class="w-full h-full object-cover transform -scale-x-100"></video>
+                <canvas id="overlayCanvas"
+                    class="absolute top-0 left-0 w-full h-full pointer-events-none transform -scale-x-100 object-cover"></canvas>
+            </div>
+
+            <!-- Prediction Badge -->
+            <div id="predBadge"
+                class="absolute top-4 right-4 z-30 bg-white/90 backdrop-blur rounded-xl p-3 shadow-lg border border-white/20 min-w-[80px] flex flex-col items-center justify-center">
+                <div class="text-[10px] text-slate-500 font-bold font-arabic mb-1 text-center">
+                    الإشارة</div>
+                <div id="predVal" class="text-5xl font-black text-blue-600 text-center leading-none quran-text">-
+                </div>
+            </div>
+
+            <!-- Letter Error Counter (Recitation Mode) -->
+            <div id="letterErrorCounter"
+                class="hidden absolute top-4 left-4 z-30 bg-red-50/95 backdrop-blur rounded-lg px-3 py-2 shadow-lg border border-red-200">
+                <div class="text-[10px] text-red-600 font-bold font-arabic mb-0.5 text-center">
+                    أخطاء</div>
+                <div id="letterErrorCount" class="text-xl font-black text-red-600 text-center leading-none font-sans">
+                    0/10
+                </div>
+            </div>
+
+            <!-- Score (Training Mode) -->
+            <div id="scoreDisplay"
+                class="absolute top-4 left-4 z-30 flex items-center gap-2 bg-slate-900/50 backdrop-blur text-white px-3 py-1.5 rounded-full">
+                <span class="text-xs">⭐️</span>
+                <span id="scoreValue" class="font-bold font-sans">0</span>
+            </div>
+
+            <!-- Verse Progress (Recitation Mode) -->
+            <div id="verseProgressDisplay"
+                class="hidden absolute bottom-4 left-4 right-4 z-30 bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-slate-500 font-bold font-arabic">تقدم الآيات</span>
+                    <span id="verseProgressText" class="text-sm font-black text-blue-600 font-arabic">آية 1 من
+                        3</span>
+                </div>
+                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div id="verseProgressBar"
+                        class="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500 rounded-full"
+                        style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Success Flash Animation Overlay -->
+            <div id="successFlash" class="absolute inset-0 z-40 pointer-events-none hidden">
+                <div class="absolute inset-0 bg-green-500/30 animate-pulse"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-8xl animate-bounce">✓</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Input & Cards -->
+        <section class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+            <!-- Free Practice Input (Hidden in Surah Mode) -->
+            <div id="freePracticeInput" class="flex items-center gap-3 mb-3">
+                <input type="text" id="gameInput" placeholder="اكتب جملة للتدريب..."
+                    class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-right text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-arabic"
+                    dir="rtl">
+                <button id="btnStartGame"
+                    class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 active:scale-95 transition-all">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Current Word Display (Centered, Big) - Always shown in Surah mode -->
+            <div id="currentWordDisplay"
+                class="hidden mb-3 text-center bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+                <div class="text-[10px] text-slate-500 mb-1 font-semibold">الكلمة الحالية</div>
+                <!-- Canvas for Arabic word with colored letters - keeps connections intact -->
+                <canvas id="arabicWordCanvas" class="mx-auto" style="max-width: 100%;"></canvas>
+            </div>
+
+            <!-- Cards Track (Scrolling) - Hidden in Recitation Mode -->
+            <div id="cardsTrack" dir="rtl"
+                class="flex flex-row items-center gap-2 overflow-x-auto py-6 px-4 hide-scrollbar min-h-[180px]">
+            </div>
+        </section>
+
+    </main>
+</div>

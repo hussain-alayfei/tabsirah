@@ -89,9 +89,7 @@ http://127.0.0.1:5000
 
 ## 📚 Documentation
 
-For complete technical documentation, see:
-
-**[📖 COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md)**
+For full details, read [DOCS.md](md_files/DOCS.md).
 
 This comprehensive guide covers:
 - 🏗️ **Architecture**: System design and data flow
@@ -197,7 +195,7 @@ We welcome contributions! Here's how:
    - Make your changes
    - Submit a pull request
 
-See [COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md#15-contributing) for detailed guidelines.
+See [CONTRIBUTING.md](md_files/CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
