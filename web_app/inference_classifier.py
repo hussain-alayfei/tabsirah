@@ -10,7 +10,7 @@ class SignLanguageClassifier:
     def __init__(self):
         # Paths relative to web_app/ folder
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # ArASL_Project root
-        model_path = os.path.join(base_dir, 'models', 'model_arabic.p')
+        model_path = os.path.join(base_dir, 'models', 'model_lightgbm.p')
         task_path = os.path.join(base_dir, 'models', 'hand_landmarker.task')
 
         if not os.path.exists(model_path):
