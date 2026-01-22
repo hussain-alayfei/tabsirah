@@ -24,6 +24,10 @@ import { generateAnalytics } from "./analytics.js";
 // MAIN INITIALIZATION
 // ============================================
 
+// ============================================
+// MAIN INITIALIZATION
+// ============================================
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize DOM references in state
     state.video = document.getElementById("videoElement");
@@ -31,243 +35,290 @@ document.addEventListener('DOMContentLoaded', () => {
     state.ctx = state.overlay.getContext("2d");
     state.predVal = document.getElementById("predVal");
 
-    // Initialize global event listeners/exposures
-    attachGlobalFunctions();
+    // Initialize Event Listeners
+    setupEventListeners();
 });
 
-function attachGlobalFunctions() {
-    // Expose functions to window because inline HTML onclicks need them
+function setupEventListeners() {
+    // --- Navigation Buttons ---
+    document.getElementById('btnTrainingMode').addEventListener('click', selectTrainingMode);
+    document.getElementById('btnFreePracticeMode').addEventListener('click', selectFreePracticeMode);
+    document.getElementById('btnBackToLanding').addEventListener('click', backToLanding);
+    document.getElementById('btnBackToSurahSelection').addEventListener('click', backToSurahSelection);
 
-    // Navigation
-    window.openApp = function () {
-        const landing = document.getElementById('landingView');
-        const app = document.getElementById('appView');
+    // --- Video Choice ---
+    document.getElementById('btnShowVideoPlayer').addEventListener('click', showVideoPlayer);
+    document.getElementById('btnStartDirectTraining').addEventListener('click', startDirectTraining);
 
-        landing.style.display = 'none';
-        app.style.display = 'flex';
-        app.classList.remove('hidden');
+    // --- Video Player ---
+    document.getElementById('btnBackToVideoChoice').addEventListener('click', backToVideoChoice);
+    document.getElementById('btnStartTrainingAfterVideo').addEventListener('click', startTrainingAfterVideo);
 
-        if (!state.video.srcObject) {
-            initAI();
+    // --- App View ---
+    document.getElementById('btnCloseApp').addEventListener('click', closeApp);
+    document.getElementById('btnStartGame').addEventListener('click', startGame);
+
+    // --- Overlays ---
+    // Correction
+    document.getElementById('btnSkipLetter').addEventListener('click', skipLetter);
+    document.getElementById('btnRetryLetter').addEventListener('click', retryLetter);
+
+    // Analytics
+    document.getElementById('btnRestartGameAnalytics').addEventListener('click', () => { closeAnalytics(); restartGame(); });
+    document.getElementById('btnCloseAnalytics').addEventListener('click', closeAnalytics);
+
+    // Summary
+    document.getElementById('btnShowAnalytics').addEventListener('click', showAnalytics);
+    document.getElementById('btnRestartGameSummary').addEventListener('click', () => { closeSummary(); restartGame(); });
+    document.getElementById('btnCloseSummary').addEventListener('click', closeSummary);
+    document.getElementById('btnPracticeErrors').addEventListener('click', startPracticeErrors);
+    document.getElementById('btnBackToSurahSelectionResults').addEventListener('click', backToSurahSelectionFromResults);
+
+    // Global exposure needed ONLY for recursive calls inside game.js or console debugging
+    window.startVerseTrainingGlobal = startVerseTraining;
+    window.openApp = openApp; // In case needed by debugging
+}
+
+// ----------------------------------------
+// Navigation Functions
+// ----------------------------------------
+
+function openApp() {
+    const landing = document.getElementById('landingView');
+    const app = document.getElementById('appView');
+
+    landing.style.display = 'none';
+    app.style.display = 'flex';
+    app.classList.remove('hidden');
+
+    if (!state.video.srcObject) {
+        initAI();
+    }
+}
+
+function closeApp() {
+    const landing = document.getElementById('landingView');
+    const app = document.getElementById('appView');
+
+    app.style.display = 'none';
+    landing.style.display = 'flex';
+
+    resetGameState();
+    state.gameActive = false;
+    state.pauseDetection = false;
+}
+
+function selectTrainingMode() {
+    state.recitationMode = false;
+    state.surahMode = true;
+
+    document.getElementById('landingView').style.display = 'none';
+    document.getElementById('surahSelectionView').style.display = 'flex';
+    document.getElementById('surahSelectionView').classList.remove('hidden');
+    document.querySelector('#surahSelectionView h1').innerText = 'اختر السورة للتدريب';
+
+    loadSurahsToGrid();
+}
+
+function selectFreePracticeMode() {
+    state.recitationMode = true;
+    state.surahMode = true;
+
+    resetGameState();
+    state.recitationMode = true;
+    state.surahMode = true;
+
+    document.getElementById('landingView').style.display = 'none';
+    document.getElementById('surahSelectionView').style.display = 'flex';
+    document.getElementById('surahSelectionView').classList.remove('hidden');
+    document.querySelector('#surahSelectionView h1').innerText = 'اختر السورة للتسميع';
+
+    loadSurahsToGrid();
+}
+
+function backToLanding() {
+    document.getElementById('surahSelectionView').style.display = 'none';
+    document.getElementById('landingView').style.display = 'flex';
+}
+
+function backToSurahSelection() {
+    document.getElementById('videoChoiceView').style.display = 'none';
+    document.getElementById('surahSelectionView').style.display = 'flex';
+}
+
+// ----------------------------------------
+// Game Control Functions
+// ----------------------------------------
+
+function startGame() {
+    const input = document.getElementById('gameInput').value.trim();
+    if (!input) return;
+
+    startGameLogic(input);
+
+    state.mistakes = [];
+    state.letterStats = {};
+    state.totalAttempts = 0;
+
+    renderCards();
+    document.getElementById('gameInput').value = "";
+}
+
+function restartGame() {
+    state.gameActive = false;
+    state.pauseDetection = false;
+
+    resetGameState();
+
+    document.getElementById('scoreValue').innerText = '0';
+    state.predVal.innerText = '-';
+    state.predVal.classList.remove('text-green-500', 'text-red-500');
+    state.predVal.classList.add('text-blue-600');
+    document.getElementById('gameInput').value = '';
+    document.getElementById('cardsTrack').innerHTML = '';
+    document.getElementById('cardsTrack').classList.remove('hidden');
+    document.getElementById('letterErrorCounter').classList.add('hidden');
+    document.getElementById('verseProgressDisplay').classList.add('hidden');
+    document.getElementById('scoreDisplay').classList.remove('hidden');
+    state.lastWrongPrediction = null;
+    document.getElementById('currentWordDisplay').classList.add('hidden');
+}
+
+// ----------------------------------------
+// Overlay Functions
+// ----------------------------------------
+
+function closeSummary() {
+    document.getElementById('summaryOverlay').classList.add('hidden');
+}
+
+function showAnalytics() {
+    document.getElementById('summaryOverlay').classList.add('hidden');
+    document.getElementById('loadingOverlay').classList.remove('hidden');
+
+    setTimeout(() => {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        generateAnalytics();
+        document.getElementById('analyticsOverlay').classList.remove('hidden');
+    }, 2000);
+}
+
+function closeAnalytics() {
+    document.getElementById('analyticsOverlay').classList.add('hidden');
+}
+
+// ----------------------------------------
+// Video / Surah Functions
+// ----------------------------------------
+
+function showVideoPlayer() {
+    document.getElementById('videoChoiceView').style.display = 'none';
+    document.getElementById('videoPlayerView').style.display = 'flex';
+    document.getElementById('videoPlayerView').classList.remove('hidden');
+    document.getElementById('videoPlayerTitle').innerText = state.currentSurah.name + ' - الشرح التعليمي';
+
+    const iframe = document.getElementById('youtubePlayer');
+    iframe.src = state.currentSurah.video_url || '';
+}
+
+function backToVideoChoice() {
+    document.getElementById('videoPlayerView').style.display = 'none';
+    document.getElementById('videoChoiceView').style.display = 'flex';
+}
+
+function startDirectTraining() {
+    document.getElementById('videoChoiceView').style.display = 'none';
+    startSurahTraining();
+}
+
+function startTrainingAfterVideo() {
+    document.getElementById('videoPlayerView').style.display = 'none';
+    startSurahTraining();
+}
+
+// ----------------------------------------
+// Correction Logic
+// ----------------------------------------
+
+function skipLetter() {
+    document.getElementById('correctionOverlay').classList.add('hidden');
+
+    const card = document.getElementById(`c-${state.currentTargetIndex}`);
+    if (card) {
+        card.classList.add('border-orange-500', 'bg-orange-50');
+        const letterDisplay = document.getElementById(`letter-${state.currentTargetIndex}`);
+        if (letterDisplay) {
+            letterDisplay.className = 'text-2xl font-black text-orange-500 mt-1 quran-text';
         }
-    };
+    }
 
-    window.closeApp = function () {
-        const landing = document.getElementById('landingView');
-        const app = document.getElementById('appView');
-
-        app.style.display = 'none';
-        landing.style.display = 'flex';
-
-        resetGameState();
-        state.gameActive = false;
-        state.pauseDetection = false;
-    };
-
-    window.selectTrainingMode = function () {
-        state.recitationMode = false;
-        state.surahMode = true;
-
-        document.getElementById('landingView').style.display = 'none';
-        document.getElementById('surahSelectionView').style.display = 'flex';
-        document.getElementById('surahSelectionView').classList.remove('hidden');
-        document.querySelector('#surahSelectionView h1').innerText = 'اختر السورة للتدريب';
-
-        loadSurahsToGrid();
-    };
-
-    window.selectFreePracticeMode = function () {
-        state.recitationMode = true;
-        state.surahMode = true;
-
-        resetGameState();
-        state.recitationMode = true; // Ensure it stays true after reset
-        state.surahMode = true;
-
-        document.getElementById('landingView').style.display = 'none';
-        document.getElementById('surahSelectionView').style.display = 'flex';
-        document.getElementById('surahSelectionView').classList.remove('hidden');
-        document.querySelector('#surahSelectionView h1').innerText = 'اختر السورة للتسميع';
-
-        loadSurahsToGrid();
-    };
-
-    window.backToLanding = function () {
-        document.getElementById('surahSelectionView').style.display = 'none';
-        document.getElementById('landingView').style.display = 'flex';
-    };
-
-    window.backToSurahSelection = function () {
-        document.getElementById('videoChoiceView').style.display = 'none';
-        document.getElementById('surahSelectionView').style.display = 'flex';
-    };
-
-    // Game Control
-    window.startGame = () => {
-        const input = document.getElementById('gameInput').value.trim();
-        if (!input) return;
-
-        startGameLogic(input);
-
-        // Reset analytics specific
-        state.mistakes = [];
-        state.letterStats = {};
-        state.totalAttempts = 0;
-
-        renderCards();
-        document.getElementById('gameInput').value = "";
-    };
-
-    window.restartGame = () => {
-        state.gameActive = false;
-        state.pauseDetection = false;
-
-        resetGameState();
-
-        // UI Reset
-        document.getElementById('scoreValue').innerText = '0';
-        state.predVal.innerText = '-';
-        state.predVal.classList.remove('text-green-500', 'text-red-500');
-        state.predVal.classList.add('text-blue-600');
-        document.getElementById('gameInput').value = '';
-        document.getElementById('cardsTrack').innerHTML = '';
-        document.getElementById('cardsTrack').classList.remove('hidden');
-        document.getElementById('letterErrorCounter').classList.add('hidden');
-        document.getElementById('verseProgressDisplay').classList.add('hidden');
-        document.getElementById('scoreDisplay').classList.remove('hidden');
-        state.lastWrongPrediction = null;
-        document.getElementById('currentWordDisplay').classList.add('hidden');
-    };
-
-    // Overlays
-    window.closeSummary = () => {
-        document.getElementById('summaryOverlay').classList.add('hidden');
-    };
-
-    window.showAnalytics = () => {
-        document.getElementById('summaryOverlay').classList.add('hidden');
-        document.getElementById('loadingOverlay').classList.remove('hidden');
-
-        setTimeout(() => {
-            document.getElementById('loadingOverlay').classList.add('hidden');
-            generateAnalytics();
-            document.getElementById('analyticsOverlay').classList.remove('hidden');
-        }, 2000);
-    };
-
-    window.closeAnalytics = () => {
-        document.getElementById('analyticsOverlay').classList.add('hidden');
-    };
-
-    // Surah Specifics
-    window.showVideoPlayer = function () {
-        document.getElementById('videoChoiceView').style.display = 'none';
-        document.getElementById('videoPlayerView').style.display = 'flex';
-        document.getElementById('videoPlayerView').classList.remove('hidden');
-        document.getElementById('videoPlayerTitle').innerText = state.currentSurah.name + ' - الشرح التعليمي';
-
-        const iframe = document.getElementById('youtubePlayer');
-        iframe.src = state.currentSurah.video_url || '';
-    };
-
-    window.backToVideoChoice = function () {
-        document.getElementById('videoPlayerView').style.display = 'none';
-        document.getElementById('videoChoiceView').style.display = 'flex';
-    };
-
-    window.startDirectTraining = function () {
-        document.getElementById('videoChoiceView').style.display = 'none';
-        startSurahTraining();
-    };
-
-    window.startTrainingAfterVideo = function () {
-        document.getElementById('videoPlayerView').style.display = 'none';
-        startSurahTraining();
-    };
-
-    // Correction Overlay Actions
-    window.skipLetter = function () {
-        document.getElementById('correctionOverlay').classList.add('hidden');
-
-        // Visual skip
-        const card = document.getElementById(`c-${state.currentTargetIndex}`);
-        if (card) {
-            card.classList.add('border-orange-500', 'bg-orange-50');
-            const letterDisplay = document.getElementById(`letter-${state.currentTargetIndex}`);
-            if (letterDisplay) {
-                letterDisplay.className = 'text-2xl font-black text-orange-500 mt-1 quran-text';
-            }
-        }
-
+    state.currentTargetIndex++;
+    while (state.currentTargetIndex < state.targetSentence.length && state.targetSentence[state.currentTargetIndex] === ' ') {
         state.currentTargetIndex++;
-        while (state.currentTargetIndex < state.targetSentence.length && state.targetSentence[state.currentTargetIndex] === ' ') {
-            state.currentTargetIndex++;
-        }
+    }
 
-        if (state.currentTargetIndex >= state.targetSentence.length) {
-            onVerseComplete();
-        } else {
-            state.gameActive = true;
-            state.pauseDetection = false;
-            updateCardStyles();
-            updateCurrentWord();
-            state.currentLetterStartTime = Date.now();
-
-            const next = document.getElementById(`c-${state.currentTargetIndex}`);
-            if (next) {
-                next.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-            }
-        }
-    };
-
-    window.retryLetter = function () {
-        document.getElementById('correctionOverlay').classList.add('hidden');
-        state.letterErrorCount[state.currentTargetIndex] = 0;
+    if (state.currentTargetIndex >= state.targetSentence.length) {
+        onVerseComplete();
+    } else {
         state.gameActive = true;
         state.pauseDetection = false;
-    };
+        updateCardStyles();
+        updateCurrentWord();
+        state.currentLetterStartTime = Date.now();
 
-    // Results Actions
-    window.backToSurahSelectionFromResults = function () {
-        document.getElementById('summaryOverlay').classList.add('hidden');
-        document.getElementById('analyticsOverlay').classList.add('hidden');
-        document.getElementById('appView').style.display = 'none';
-        document.getElementById('surahSelectionView').style.display = 'flex';
-        document.getElementById('surahSelectionView').classList.remove('hidden');
-
-        window.restartGame();
-
-        document.getElementById('backToSurahSelectionBtn').classList.add('hidden');
-        document.getElementById('practiceErrorsBtn').classList.add('hidden');
-    };
-
-    window.startPracticeErrors = function () {
-        if (state.failedVerses.length === 0) {
-            alert('لا توجد آيات تحتاج مراجعة!');
-            return;
+        const next = document.getElementById(`c-${state.currentTargetIndex}`);
+        if (next) {
+            next.scrollIntoView({ behavior: 'smooth', inline: 'center' });
         }
+    }
+}
 
-        document.getElementById('summaryOverlay').classList.add('hidden');
+function retryLetter() {
+    document.getElementById('correctionOverlay').classList.add('hidden');
+    state.letterErrorCount[state.currentTargetIndex] = 0;
+    state.gameActive = true;
+    state.pauseDetection = false;
+}
 
-        const originalVerses = state.currentSurah.verses.slice();
-        state.currentSurah.verses = state.failedVerses.map(fv => fv.verse);
+// ----------------------------------------
+// Results Logic
+// ----------------------------------------
 
-        state.currentVerseIndex = 0;
-        state.letterErrorCount = {};
-        state.verseResults = [];
-        state.failedVerses = [];
-        state.mistakes = [];
-        state.letterStats = {};
+function backToSurahSelectionFromResults() {
+    document.getElementById('summaryOverlay').classList.add('hidden');
+    document.getElementById('analyticsOverlay').classList.add('hidden');
+    document.getElementById('appView').style.display = 'none';
+    document.getElementById('surahSelectionView').style.display = 'flex';
+    document.getElementById('surahSelectionView').classList.remove('hidden');
 
-        startVerseTraining();
+    restartGame();
 
-        state.currentSurah._originalVerses = originalVerses;
-        state.currentSurah._isPracticeErrors = true;
-    };
+    document.getElementById('backToSurahSelectionBtn').classList.add('hidden');
+    document.getElementById('practiceErrorsBtn').classList.add('hidden');
+}
 
-    // We also need to expose startVerseTraining for recursion in game.js via window if we didn't export it
-    // But since game.js needs it too, we define it here and attach
-    window.startVerseTrainingGlobal = startVerseTraining;
+function startPracticeErrors() {
+    if (state.failedVerses.length === 0) {
+        alert('لا توجد آيات تحتاج مراجعة!');
+        return;
+    }
+
+    document.getElementById('summaryOverlay').classList.add('hidden');
+
+    const originalVerses = state.currentSurah.verses.slice();
+    state.currentSurah.verses = state.failedVerses.map(fv => fv.verse);
+
+    state.currentVerseIndex = 0;
+    state.letterErrorCount = {};
+    state.verseResults = [];
+    state.failedVerses = [];
+    state.mistakes = [];
+    state.letterStats = {};
+
+    startVerseTraining();
+
+    state.currentSurah._originalVerses = originalVerses;
+    state.currentSurah._isPracticeErrors = true;
 }
 
 // Helper to load surahs into the grid

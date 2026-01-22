@@ -32,28 +32,28 @@
         </div>
 
         <div class="space-y-3">
-            <button onclick="showAnalytics()"
+            <button id="btnShowAnalytics"
                 class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg font-arabic">
                 نعم، أرني النتيجة
             </button>
             <div class="space-y-3" id="summaryButtons">
                 <div class="flex gap-3">
-                    <button onclick="closeSummary(); restartGame();"
+                    <button id="btnRestartGameSummary"
                         class="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all font-arabic">
                         تدريب جديد
                     </button>
-                    <button onclick="closeSummary()"
+                    <button id="btnCloseSummary"
                         class="flex-1 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all font-arabic">
                         إغلاق
                     </button>
                 </div>
                 <!-- Practice Errors button (Recitation Mode - hidden by default) -->
-                <button id="practiceErrorsBtn" onclick="startPracticeErrors()"
+                <button id="btnPracticeErrors"
                     class="hidden w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold hover:from-orange-600 hover:to-red-600 transition-all font-arabic mt-3">
                     <span>تدرب على الأخطاء</span>
                 </button>
                 <!-- Surah-specific button (hidden by default) -->
-                <button id="backToSurahSelectionBtn" onclick="backToSurahSelectionFromResults()"
+                <button id="btnBackToSurahSelectionResults"
                     class="hidden w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all font-arabic mt-2">
                     اختر سورة أخرى
                 </button>

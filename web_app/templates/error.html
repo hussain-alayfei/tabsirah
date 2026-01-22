@@ -32,11 +32,17 @@
             └── hand_landmarker.task
         </div>
 
-        <button onclick="location.reload()"
+        <button id="btnReload"
             class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95">
             إعادة المحاولة
         </button>
     </div>
+
+    <script>
+        document.getElementById('btnReload').addEventListener('click', () => {
+            location.reload();
+        });
+    </script>
 
 </body>
 
