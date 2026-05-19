@@ -3,4 +3,5 @@ mediapipe
 scikit-learn
 flask
 gunicorn
+lightgbm
 numpy==1.26.4
