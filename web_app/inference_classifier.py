@@ -21,7 +21,10 @@ class SignLanguageClassifier:
         self.model_dict = pickle.load(open(model_path, 'rb'))
         self.model = self.model_dict['model']
         
-        base_options = python.BaseOptions(model_asset_path=task_path)
+        base_options = python.BaseOptions(
+            model_asset_path=task_path,
+            delegate=python.BaseOptions.Delegate.CPU,
+        )
         options = vision.HandLandmarkerOptions(
             base_options=base_options,
             num_hands=1,
