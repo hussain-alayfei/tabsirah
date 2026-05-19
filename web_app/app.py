@@ -6,6 +6,18 @@ import numpy as np
 import base64
 import os
 import glob
+import json
+import time
+
+# #region agent log
+_DEBUG_LOG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'debug-e8a399.log')
+def _dbg(location, message, data, hypothesis_id):
+    try:
+        with open(_DEBUG_LOG, 'a', encoding='utf-8') as f:
+            f.write(json.dumps({'sessionId': 'e8a399', 'timestamp': int(time.time() * 1000), 'location': location, 'message': message, 'data': data, 'hypothesisId': hypothesis_id}) + '\n')
+    except Exception:
+        pass
+# #endregion
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False  # Ensure Arabic characters are not escaped in JSON
@@ -14,9 +26,15 @@ app.config['JSON_AS_ASCII'] = False  # Ensure Arabic characters are not escaped 
 try:
     classifier = SignLanguageClassifier()
     print("Model loaded successfully.")
+    # #region agent log
+    _dbg('app.py:init', 'classifier_init_ok', {'detector': classifier.detector is not None, 'landmarks_only': getattr(classifier, 'landmarks_only', False)}, 'H1')
+    # #endregion
 except Exception as e:
     print(f"Error loading model: {e}")
     classifier = None
+    # #region agent log
+    _dbg('app.py:init', 'classifier_init_failed', {'error': str(e)}, 'H1')
+    # #endregion
 
 @app.route('/')
 def index():
@@ -122,6 +140,9 @@ def get_sign_image(char):
 @app.route('/predict', methods=['POST'])
 def predict():
     if not classifier:
+        # #region agent log
+        _dbg('app.py:predict', 'no_classifier', {}, 'H1')
+        # #endregion
         return jsonify({'error': 'Model not loaded', 'prediction': None, 'landmarks': []}), 200
     
     try:
@@ -154,8 +175,19 @@ def predict():
             return jsonify({'error': 'Failed to decode image', 'prediction': None, 'landmarks': []}), 200
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        label, detection_result = classifier.predict(frame_rgb)
+
+        client_landmarks = json_data.get('landmarks')
+        if client_landmarks and len(client_landmarks) >= 21:
+            label = classifier.classify_landmarks(client_landmarks)
+            detection_result = None
+            # #region agent log
+            _dbg('app.py:predict', 'used_client_landmarks', {'label': label, 'n': len(client_landmarks)}, 'H2')
+            # #endregion
+        else:
+            label, detection_result = classifier.predict(frame_rgb)
+            # #region agent log
+            _dbg('app.py:predict', 'used_server_image', {'label': label, 'has_hands': bool(detection_result and detection_result.hand_landmarks), 'had_client_lm': bool(client_landmarks)}, 'H2')
+            # #endregion
         
         # Serialize landmarks
         landmarks_data = []

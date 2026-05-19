@@ -1549,6 +1549,7 @@
                 ctx.clearRect(0, 0, overlay.width, overlay.height);
 
                 if (results.landmarks && results.landmarks.length > 0) {
+                    lastClientLandmarks = results.landmarks[0];
 
                     // *** DRAW HAND LANDMARKS IN REAL-TIME ***
                     drawHandLandmarks(results.landmarks, overlay.width, overlay.height);
@@ -1560,6 +1561,7 @@
                         sendForPrediction();
                     }
                 } else {
+                    lastClientLandmarks = null;
                     predVal.innerText = '-';
                     predVal.classList.remove('text-green-500', 'text-red-500');
                     predVal.classList.add('text-blue-600');
@@ -1571,6 +1573,8 @@
         // ============================================
         // BACKEND
         // ============================================
+        let lastClientLandmarks = null;
+
         function sendForPrediction() {
             const proc = document.createElement('canvas');
             proc.width = video.videoWidth;
@@ -1579,11 +1583,19 @@
             pCtx.drawImage(video, 0, 0, proc.width, proc.height);
             const u = proc.toDataURL('image/jpeg', 0.5);
 
+            const payload = { image: u };
+            if (lastClientLandmarks && lastClientLandmarks.length >= 21) {
+                payload.landmarks = lastClientLandmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z }));
+            }
+
             fetch('/predict', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: u })
+                body: JSON.stringify(payload)
             }).then(r => r.json()).then(d => {
+                // #region agent log
+                fetch('http://127.0.0.1:7928/ingest/79a94a2b-a4a3-41c1-a98c-6dbc8d185cb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e8a399'},body:JSON.stringify({sessionId:'e8a399',location:'index.html:sendForPrediction',message:'predict_response',data:{prediction:d.prediction,error:d.error||null,sentLandmarks:!!(payload.landmarks&&payload.landmarks.length>=21)},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+                // #endregion
                 // Handle prediction (can be null, string, or undefined)
                 if (d.prediction !== undefined && d.prediction !== null) {
                     const p = d.prediction;
