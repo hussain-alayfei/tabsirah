@@ -6,18 +6,6 @@ import numpy as np
 import base64
 import os
 import glob
-import json
-import time
-
-# #region agent log
-_DEBUG_LOG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'debug-e8a399.log')
-def _dbg(location, message, data, hypothesis_id):
-    try:
-        with open(_DEBUG_LOG, 'a', encoding='utf-8') as f:
-            f.write(json.dumps({'sessionId': 'e8a399', 'timestamp': int(time.time() * 1000), 'location': location, 'message': message, 'data': data, 'hypothesisId': hypothesis_id}) + '\n')
-    except Exception:
-        pass
-# #endregion
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False  # Ensure Arabic characters are not escaped in JSON
@@ -26,15 +14,9 @@ app.config['JSON_AS_ASCII'] = False  # Ensure Arabic characters are not escaped 
 try:
     classifier = SignLanguageClassifier()
     print("Model loaded successfully.")
-    # #region agent log
-    _dbg('app.py:init', 'classifier_init_ok', {'detector': classifier.detector is not None, 'landmarks_only': getattr(classifier, 'landmarks_only', False)}, 'H1')
-    # #endregion
 except Exception as e:
     print(f"Error loading model: {e}")
     classifier = None
-    # #region agent log
-    _dbg('app.py:init', 'classifier_init_failed', {'error': str(e)}, 'H1')
-    # #endregion
 
 @app.route('/')
 def index():
@@ -98,37 +80,28 @@ def normalize_char_for_image(char):
     return char
 
 @app.route('/sign_image/<path:char>')
-def get_sign_image(char):
+def sign_image(char):
     """
-    Dynamic Image Selector:
+    Serve sign image for a given Arabic character.
     Finds all images starting with `char` in static/signs/
-    Sorts them and returns the LAST one.
-    Useful for versioning: 'Aleff.jpg', 'Aleff_v2.jpg' -> serves 'Aleff_v2.jpg'
     """
     try:
-        # Base directory
+        normalized_char = normalize_char_for_image(char)
         static_folder = os.path.join(app.static_folder, 'signs')
         
-        # Decode URL-encoded character if needed
-        from urllib.parse import unquote
-        char = unquote(char)
+        if not os.path.exists(static_folder):
+            return abort(404)
         
-        # Normalize the character (أ، إ، آ → ا)
-        normalized_char = normalize_char_for_image(char)
-        
-        # PRIORITY 1: Try exact match with normalized character
         exact_path = os.path.join(static_folder, f"{normalized_char}.jpg")
         if os.path.exists(exact_path):
             return send_file(exact_path, mimetype='image/jpeg')
         
-        # PRIORITY 2: Search pattern for versioned files (char + suffix + extension)
         pattern = os.path.join(static_folder, f"{normalized_char}*.jpg")
         matches = glob.glob(pattern)
         
         if not matches:
             return abort(404)
             
-        # Sort matches and select last one (for versioning support)
         matches.sort()
         last_image = matches[-1]
         
@@ -140,13 +113,9 @@ def get_sign_image(char):
 @app.route('/predict', methods=['POST'])
 def predict():
     if not classifier:
-        # #region agent log
-        _dbg('app.py:predict', 'no_classifier', {}, 'H1')
-        # #endregion
         return jsonify({'error': 'Model not loaded', 'prediction': None, 'landmarks': []}), 200
     
     try:
-        # Check if request has JSON
         if not request.is_json:
             return jsonify({'error': 'No JSON data', 'prediction': None, 'landmarks': []}), 200
             
@@ -156,8 +125,6 @@ def predict():
             
         data = json_data['image']
         
-        # Decode base64
-        # Data URL format: "data:image/jpeg;base64,/9j/4AAQ..."
         if "," in data:
             header, encoded = data.split(",", 1)
         else:
@@ -180,16 +147,9 @@ def predict():
         if client_landmarks and len(client_landmarks) >= 21:
             label = classifier.classify_landmarks(client_landmarks)
             detection_result = None
-            # #region agent log
-            _dbg('app.py:predict', 'used_client_landmarks', {'label': label, 'n': len(client_landmarks)}, 'H2')
-            # #endregion
         else:
             label, detection_result = classifier.predict(frame_rgb)
-            # #region agent log
-            _dbg('app.py:predict', 'used_server_image', {'label': label, 'has_hands': bool(detection_result and detection_result.hand_landmarks), 'had_client_lm': bool(client_landmarks)}, 'H2')
-            # #endregion
         
-        # Serialize landmarks
         landmarks_data = []
         if detection_result and detection_result.hand_landmarks:
             for hand_landmarks in detection_result.hand_landmarks:
@@ -198,7 +158,6 @@ def predict():
                     hand_points.append({'x': landmark.x, 'y': landmark.y})
                 landmarks_data.append(hand_points)
 
-        # Ensure label is properly encoded (None becomes null in JSON)
         response_data = {
             'prediction': label if label is not None else None,
             'landmarks': landmarks_data
@@ -206,7 +165,6 @@ def predict():
         
         return jsonify(response_data)
     except Exception as e:
-        # Return valid JSON even on error
         return jsonify({'error': str(e), 'prediction': None, 'landmarks': []}), 200
 
 if __name__ == '__main__':

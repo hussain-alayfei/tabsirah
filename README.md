@@ -35,7 +35,7 @@ An AI-powered web application that provides real-time feedback on Arabic sign la
 
 ### 🤖 AI-Powered Detection
 - **MediaPipe Hand Tracking**: 21 landmark detection with 95%+ accuracy
-- **Random Forest Classifier**: Fast, accurate sign classification
+- **LightGBM Classifier**: Fast, accurate sign classification from hand landmarks
 - **Real-time Processing**: <50ms prediction latency
 - **30 Arabic Letters**: Complete Arabic alphabet + special combinations
 
@@ -59,7 +59,7 @@ An AI-powered web application that provides real-time feedback on Arabic sign la
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/tabsirah.git
+git clone https://github.com/hussain-alayfei/tabsirah.git
 cd tabsirah
 
 # Create virtual environment
@@ -88,6 +88,13 @@ http://127.0.0.1:5000
 ---
 
 ## 📚 Documentation
+
+| Doc | Audience |
+|-----|----------|
+| **[AGENTS.md](AGENTS.md)** | **AI agents / maintainers** — Git, Render, production pitfalls |
+| [COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md) | Full technical reference |
+| [GIT_WORKFLOW.md](GIT_WORKFLOW.md) | Branching and commits |
+| [PRODUCTION_READY.md](PRODUCTION_READY.md) | Deploy checklist and live status |
 
 For complete technical documentation, see:
 
@@ -134,7 +141,7 @@ Beautiful landing page with two learning modes:
 | **Frontend** | HTML5, Tailwind CSS, JavaScript |
 | **AI/ML** | MediaPipe, Scikit-Learn, OpenCV |
 | **Hand Detection** | MediaPipe Hand Landmarker |
-| **Classification** | Random Forest (200 estimators) |
+| **Classification** | LightGBM (`model_lightgbm.p`) |
 | **Fonts** | Cairo (UI), Amiri (Quranic Text) |
 
 ---
@@ -147,7 +154,8 @@ tabsirah/
 ├── data_processed/       # Processed features (pickle files)
 ├── models/               # Trained AI models
 │   ├── hand_landmarker.task   # MediaPipe model
-│   └── model_arabic.p         # Random Forest classifier
+│   ├── model_lightgbm.p       # Production classifier (LightGBM)
+│   └── model_arabic.p         # Legacy Random Forest (training script)
 ├── src/                  # Data processing & training scripts
 │   ├── 3_process_data.py
 │   └── 4_train_model.py
@@ -227,7 +235,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📞 Contact & Support
 
 - **Documentation**: [Complete Docs](COMPLETE_PROJECT_DOCUMENTATION.md)
-- **Issues**: [GitHub Issues](https://github.com/your-username/tabsirah/issues)
+- **Live app**: https://tabsirah.onrender.com
+- **Issues**: [GitHub Issues](https://github.com/hussain-alayfei/tabsirah/issues)
 - **Email**: support@tabsirah.com
 
 ---

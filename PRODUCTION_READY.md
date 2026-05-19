@@ -1,9 +1,9 @@
 # ✅ Production Ready Checklist
 
 **Project**: Tabsirah (Arabic Sign Language Quran Learning App)  
-**Date**: January 20, 2026  
-**Version**: 2.0.0  
-**Status**: 🚀 **PRODUCTION READY**
+**Date**: May 19, 2026  
+**Version**: 2.0.1  
+**Status**: 🚀 **PRODUCTION READY** (live on Render)
 
 ---
 
@@ -63,7 +63,8 @@ tabsirah/
 │
 ├── models/                      # Trained AI models ⚠️ IMPORTANT
 │   ├── hand_landmarker.task    # MediaPipe model (26MB)
-│   └── model_arabic.p          # Random Forest classifier
+│   ├── model_lightgbm.p        # Production classifier (LightGBM)
+│   └── model_arabic.p          # Legacy (training script output)
 │
 ├── src/                         # Training scripts (keep for retraining)
 │   ├── 3_process_data.py       # Feature extraction
@@ -88,42 +89,49 @@ tabsirah/
 
 ## 🔧 Git Repository Status
 
+**Remote:** `https://github.com/hussain-alayfei/tabsirah.git`  
+**Default branch:** `main`  
+**Working tree:** clean (verify with `git status`)
+
 ### Branches
-- ✅ **main** - Production branch (current)
-- ✅ **develop** - Development/integration branch
-- 🔗 **origin/main** - Connected to GitHub (already deployed to Render)
 
-### Recent Commits
+| Branch | Role |
+|--------|------|
+| `main` | Production → Render auto-deploy |
+| `develop` | Integration |
+| `master` | Legacy (remote only; prefer `main`) |
+
+### Recent commits (production)
+
 ```
-01299ba - chore: Clean up codebase for production
-8e96aa3 - Restore original model behavior - remove image resizing
-92dd7e0 - Fix: Remove hardcoded port from gunicorn config
-69a61ed - Fix: Add PORT binding to Procfile
+add6ac6  fix: classify from browser landmarks when server MediaPipe unavailable
+d65206e  fix: use CPU delegate and Mesa libs for Render headless
+ef5082e  fix: add lightgbm to requirements for Render deployment
+09bd196  chore: update model to lightgbm
 ```
 
-### Commit Statistics
-- **Clean History**: ✅ Well-organized commits
-- **Proper Messages**: ✅ Descriptive and following conventions
-- **No Sensitive Data**: ✅ No API keys or passwords
+### Agent / maintainer docs
+
+See **[AGENTS.md](AGENTS.md)** for Render pitfalls, prediction pipeline, and “do not repeat” checklist.
 
 ---
 
 ## 🚀 Deployment Status
 
 ### Current Deployment
-- **Platform**: Render
+- **Platform**: Render (Web Service)
 - **URL**: https://tabsirah.onrender.com
-- **Branch**: main (auto-deploy enabled)
-- **Status**: ✅ Live and running
-- **Plan**: Free → **Recommended to upgrade to Starter ($7/mo)**
+- **Service ID**: `srv-d5nge0khg0os73df7qcg`
+- **Runtime**: Python 3 (not Node)
+- **Branch**: `main` (auto-deploy **ON**)
+- **Status**: ✅ Live (verified 2026-05-19)
+- **Plan**: Free (0.1 CPU; cold starts after idle)
 
 ### Deployment Configuration
-- ✅ Procfile configured
-- ✅ requirements.txt up to date
-- ✅ Gunicorn production server
-- ✅ Models included in repository
-- ✅ Environment variables ready
-- ✅ Health checks passing
+- ✅ Procfile / start: `cd web_app && gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 2`
+- ✅ `requirements.txt` includes **lightgbm**
+- ✅ Client-landmarks fallback when server MediaPipe unavailable (`libGLESv2` on Linux)
+- ✅ Expected log: `HandLandmarker unavailable (client-landmarks mode)` + `Model loaded successfully`
 
 ---
 

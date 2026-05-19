@@ -5,6 +5,22 @@ All notable changes to the Tabsirah project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-05-19
+
+### Fixed
+- **Render production predictions**: Added `lightgbm` to `requirements.txt`
+- **Render runtime**: Switched service from Node to Python 3 with correct Gunicorn start command
+- **Headless Linux**: Server MediaPipe no longer blocks startup; classify from **browser-sent landmarks** when `libGLESv2` unavailable
+- **Auto-deploy**: Re-enabled on Render `main` branch
+
+### Added
+- **AGENTS.md**: Maintainer/agent guide (Git status, Render checklist, common failures)
+- **Aptfile**: Optional Mesa GL libraries for server MediaPipe
+- Client sends `landmarks` array with each `/predict` request
+
+### Changed
+- Production model documented as `model_lightgbm.p` (replaces Random Forest in inference)
+
 ## [2.0.0] - 2026-01-20
 
 ### Added

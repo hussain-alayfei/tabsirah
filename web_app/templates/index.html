@@ -1593,9 +1593,6 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(r => r.json()).then(d => {
-                // #region agent log
-                fetch('http://127.0.0.1:7928/ingest/79a94a2b-a4a3-41c1-a98c-6dbc8d185cb7',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'e8a399'},body:JSON.stringify({sessionId:'e8a399',location:'index.html:sendForPrediction',message:'predict_response',data:{prediction:d.prediction,error:d.error||null,sentLandmarks:!!(payload.landmarks&&payload.landmarks.length>=21)},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-                // #endregion
                 // Handle prediction (can be null, string, or undefined)
                 if (d.prediction !== undefined && d.prediction !== null) {
                     const p = d.prediction;

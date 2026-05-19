@@ -364,9 +364,40 @@ git commit
 
 ---
 
-**Current Repository Status:**
-- ✅ Git initialized
-- ✅ Main branch set up
-- ✅ Develop branch created
-- ✅ Clean commit history
-- ✅ Ready for GitHub push
+## 🚀 Render deployment (production)
+
+**URL:** https://tabsirah.onrender.com  
+**Branch:** `main` only for production deploys  
+**Full checklist:** [AGENTS.md](AGENTS.md)
+
+### Before merging to `main`
+
+- [ ] `lightgbm` in `requirements.txt`
+- [ ] `web_app/inference_classifier.py` loads LightGBM even if server MediaPipe fails
+- [ ] Client sends `landmarks` in `/predict` body (`index.html`)
+- [ ] Render service runtime = **Python 3** (never Node for this repo)
+- [ ] Start command matches `Procfile`
+
+### After push to `main`
+
+Render auto-deploys. Verify logs for:
+
+```
+Model loaded successfully.
+```
+
+`HandLandmarker unavailable (client-landmarks mode)` is **OK** on Render.
+
+### Verify predictions
+
+- `POST /predict` response size **> 62 bytes** when hand visible
+- UI **الإشارة** shows Arabic letter, not `-`
+
+---
+
+**Current Repository Status (2026-05-19):**
+- ✅ Remote: `origin` → `github.com/hussain-alayfei/tabsirah`
+- ✅ Production branch: `main` (tracks `origin/main`)
+- ✅ Integration branch: `develop` on remote
+- ✅ Legacy branch: `master` on remote (use `main`)
+- ✅ Render live with auto-deploy on `main`

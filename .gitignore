@@ -72,6 +72,9 @@ verify_images.py
 .env
 .env.local
 
+# Debug session logs (Cursor agent)
+debug-*.log
+
 # Coverage reports
 htmlcov/
 .coverage

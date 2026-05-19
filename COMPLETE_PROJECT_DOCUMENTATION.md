@@ -1,8 +1,10 @@
 # 📖 Tabsirah (تطبيق تبصرة) - Complete Project Documentation
 
-**Version:** 2.0  
-**Last Updated:** January 2026  
-**Status:** Production Ready
+**Version:** 2.0.1  
+**Last Updated:** May 2026  
+**Status:** Production Ready (Render)
+
+> **Agents:** See [AGENTS.md](AGENTS.md) for up-to-date Git/Render status. This file may still reference Random Forest in places; production uses **LightGBM** (`model_lightgbm.p`) and **client-landmarks** on headless servers.
 
 ---
 
