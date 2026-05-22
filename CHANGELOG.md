@@ -5,6 +5,36 @@ All notable changes to the Tabsirah project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-05-22
+
+### Added
+- **GitHub Actions CI**: Pytest runs automatically on every push to `dev` and PR to `main`
+- **Test suite**: 17 tests covering model loading, prediction pipeline, and feature engineering
+- **`web_app/constants.py`**: Single source of truth for LABELS dict (30 classes) and HAND_CONNECTIONS
+- **`requirements-dev.txt`**: Dev-only dependencies (pytest, kagglehub)
+- **`convert_model.py`**: Utility to shrink ensemble (5→3 models) without retraining
+
+### Changed
+- **Model upgrade**: LightGBM 3-model ensemble (62 features, ~97.7% accuracy) replaces single model
+- **Inference pipeline**: `engineer_features()` adds 20 geometric features (tip distances, wrist distances, bend angles)
+- **Ensemble prediction**: Averaged `predict_proba` across 3 models instead of single `predict()`
+- **Codebase cleanup**: Removed 8 dead/duplicate files, consolidated 5 scattered docs into `docs/`
+- **Encoding fix**: Converted 6 UTF-16LE Python files to UTF-8
+- **Git workflow**: `dev` branch for integration, `main` for production (replaces old `develop`/`master`)
+
+### Removed
+- `copy_signs.py`, `verify_images.py` (dead utility scripts)
+- `models/model_arabic.p` (18 MB legacy Random Forest — superseded by LightGBM)
+- `web_app/gunicorn.conf.py` (unused; Procfile handles this)
+- `src/1_download_data.py`, `src/2_verify_mapping.py`, `src/5_update_app.py`, `src/sync_images.py` (dead scripts)
+- 5 redundant markdown files (COMPLETE_PROJECT_DOCUMENTATION.md, PRODUCTION_READY.md, etc.)
+- Stale remote branches: `develop`, `master`
+
+### Fixed
+- **Silent null predictions**: Model loaded as list but code called `.predict()` on it — now iterates ensemble
+- **Feature mismatch**: 42-feature extraction hitting 62-feature model — now engineers features when `use_engineered=True`
+- **Error logging**: Feature mismatches and prediction errors now log explicitly instead of failing silently
+
 ## [2.0.1] - 2026-05-19
 
 ### Fixed
@@ -35,7 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Advanced Analytics**: Detailed error rates, pass/fail determination, and progress tracking
 - **Responsive Design**: Mobile-first approach with tablet and desktop optimization
 - **Production Deployment**: Deployed to Render with Gunicorn
-- **Comprehensive Documentation**: Complete technical documentation with 17 sections
 
 ### Changed
 - **UI/UX Redesign**: 
@@ -74,9 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
-- **v2.0.0** (Current): Production-ready with advanced features and full deployment
+- **v2.1.0** (Current): Codebase cleanup, LightGBM ensemble, CI pipeline, test suite
+- **v2.0.0**: Production-ready with advanced features and full deployment
 - **v1.0.0**: Initial MVP with basic sign language detection
-
----
-
-For detailed technical changes, see [COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md)

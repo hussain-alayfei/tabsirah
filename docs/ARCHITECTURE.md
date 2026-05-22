@@ -38,10 +38,13 @@ tabsirah/
 ├── requirements.txt           # Production Python deps
 ├── requirements-dev.txt       # Dev/training deps (pytest, kagglehub)
 ├── convert_model.py           # Shrink ensemble (5→3→1 models)
+├── .github/
+│   └── workflows/test.yml     # CI: pytest on push to dev / PR to main
 ├── docs/
 │   ├── ARCHITECTURE.md        # ← you are here
 │   ├── DEPLOYMENT.md          # Render deploy + production notes
-│   └── CONTRIBUTING.md        # Dev workflow + git conventions
+│   ├── CONTRIBUTING.md        # Dev workflow + git conventions
+│   └── GIT_WORKFLOW.md        # Branch strategy (dev → main)
 ├── models/
 │   ├── hand_landmarker.task   # MediaPipe hand model (~7.4 MB)
 │   └── model_lightgbm.p      # Production classifier (~63 MB)
@@ -188,3 +191,26 @@ Resets to `null` when hand disappears to prevent snapping from stale positions.
 4. **Convert**: `convert_model.py` — shrinks ensemble (e.g. 5→3 models) for deployment
 
 > **Note:** `src/4_train_model.py` still trains a Random Forest. The current production model was trained in a Kaggle notebook using LightGBM with Optuna hyperparameter tuning. To retrain with LightGBM, use the Kaggle notebook workflow.
+
+---
+
+## CI/CD Pipeline
+
+GitHub Actions (`.github/workflows/test.yml`) runs the full test suite on:
+
+| Trigger | When |
+|---------|------|
+| Push to `dev` | Every commit on the integration branch |
+| PR to `main` | Before anything reaches production |
+
+The pipeline:
+1. Checks out the repo (including the 63 MB model file)
+2. Sets up Python 3.11 (matching Render)
+3. Installs `requirements.txt` + `requirements-dev.txt`
+4. Runs `pytest tests/ -v`
+
+If any test fails, the push/PR is marked as failed. This catches:
+- Feature contract breaks (42 vs 62 features)
+- Model format changes (pickle structure)
+- Label mapping drift
+- Prediction pipeline regressions

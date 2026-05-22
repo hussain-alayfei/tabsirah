@@ -36,14 +36,14 @@ cd web_app && python app.py
 | Branch | Purpose |
 |--------|---------|
 | `main` | Production — auto-deploys to Render |
-| `develop` | Integration branch for feature merges |
+| `dev` | Integration branch for feature merges |
 | Feature branches | `feature/description` or `fix/description` |
 
 ### Rules
 
 1. **Never push directly to `main`** unless it's an urgent production fix
-2. Feature work: branch from `develop` → PR → merge to `develop`
-3. Releases: merge `develop` → `main` (triggers deploy)
+2. Feature work: branch from `dev` → PR → merge to `dev`
+3. Releases: merge `dev` → `main` (triggers deploy)
 4. Never commit `.env`, API keys, or `~/.cursor/mcp.json`
 
 ### Commit Messages
@@ -78,6 +78,7 @@ test: add engineer_features tests
 - Tests live in `tests/`
 - Run with `python -m pytest tests/ -v`
 - At minimum, test any changes to `engineer_features()` or model loading
+- **CI runs automatically** on push to `dev` and PRs to `main` via GitHub Actions
 
 ---
 
@@ -95,7 +96,7 @@ Open a GitHub issue with:
 2. Create a branch (`feature/my-change`)
 3. Make your changes
 4. Run tests: `python -m pytest tests/`
-5. Submit a pull request to `develop`
+5. Submit a pull request to `dev`
 
 ### Add a New Surah
 1. Add content in `web_app/surah_data.py`

@@ -2,9 +2,10 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-2.0-blue)
+![Version](https://img.shields.io/badge/version-2.1-blue)
 ![Python](https://img.shields.io/badge/python-3.11-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
+![Tests](https://github.com/hussain-alayfei/tabsirah/actions/workflows/test.yml/badge.svg?branch=dev)
 
 **Learn and Memorize the Quran with Arabic Sign Language**
 
@@ -84,6 +85,7 @@ Open http://127.0.0.1:5000
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, prediction pipeline, API reference |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Render deploy config, troubleshooting |
 | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Dev setup, git workflow, code guidelines |
+| [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) | Branch strategy, deploy flow, Git LFS notes |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
 
 ---
@@ -105,6 +107,7 @@ Open http://127.0.0.1:5000
 
 ```
 tabsirah/
+├── .github/workflows/    # CI: pytest on push/PR
 ├── models/               # Trained AI models
 │   ├── hand_landmarker.task   # MediaPipe model
 │   └── model_lightgbm.p      # Production classifier (LightGBM ensemble)
@@ -118,7 +121,7 @@ tabsirah/
 │   ├── surah_data.py     # Quranic content
 │   ├── static/signs/     # Sign reference images
 │   └── templates/        # HTML templates
-├── tests/                # Test suite
+├── tests/                # Test suite (17 tests)
 ├── docs/                 # Technical documentation
 ├── requirements.txt      # Production dependencies
 └── Procfile              # Render start command

@@ -123,10 +123,12 @@ Open http://127.0.0.1:5000
 
 ## Deploy Workflow
 
-1. Make changes on a feature branch
+1. Make changes on `dev` (or a feature branch merged into `dev`)
 2. Test locally (`python web_app/app.py`)
-3. Merge to `main`
-4. Render auto-deploys within ~2 minutes
-5. Check logs and verify (see checklist above)
+3. Push to `dev` — **CI runs automatically** (GitHub Actions pytest)
+4. Confirm CI passes (green check on GitHub)
+5. Merge `dev` → `main` (or `git checkout main && git merge dev`)
+6. Push `main` — Render auto-deploys within ~2 minutes
+7. Check Render logs and verify (see checklist above)
 
-**Never push directly to `main` without testing locally first.**
+**Never push directly to `main` without testing locally and confirming CI passes first.**
