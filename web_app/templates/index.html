@@ -1549,10 +1549,11 @@
                 ctx.clearRect(0, 0, overlay.width, overlay.height);
 
                 if (results.landmarks && results.landmarks.length > 0) {
-                    lastClientLandmarks = results.landmarks[0];
+                    const smoothed = smoothLandmarks(results.landmarks[0]);
+                    lastClientLandmarks = smoothed;
 
-                    // *** DRAW HAND LANDMARKS IN REAL-TIME ***
-                    drawHandLandmarks(results.landmarks, overlay.width, overlay.height);
+                    // *** DRAW HAND LANDMARKS IN REAL-TIME (smoothed) ***
+                    drawHandLandmarks([smoothed], overlay.width, overlay.height);
 
                     // Prediction Throttle
                     const now = Date.now();
@@ -1561,6 +1562,7 @@
                         sendForPrediction();
                     }
                 } else {
+                    smoothedLandmarks = null; // reset so skeleton doesn't snap from stale position
                     lastClientLandmarks = null;
                     predVal.innerText = '-';
                     predVal.classList.remove('text-green-500', 'text-red-500');
@@ -1574,6 +1576,23 @@
         // BACKEND
         // ============================================
         let lastClientLandmarks = null;
+
+        // --- Exponential Moving Average smoothing for hand landmarks ---
+        let smoothedLandmarks = null;
+        const SMOOTHING = 0.5; // 0 = raw/jittery, 1 = frozen/laggy. 0.4–0.6 is the sweet spot.
+
+        function smoothLandmarks(raw) {
+            if (!smoothedLandmarks || smoothedLandmarks.length !== raw.length) {
+                smoothedLandmarks = raw.map(p => ({ x: p.x, y: p.y, z: p.z }));
+                return smoothedLandmarks;
+            }
+            for (let i = 0; i < raw.length; i++) {
+                smoothedLandmarks[i].x = SMOOTHING * smoothedLandmarks[i].x + (1 - SMOOTHING) * raw[i].x;
+                smoothedLandmarks[i].y = SMOOTHING * smoothedLandmarks[i].y + (1 - SMOOTHING) * raw[i].y;
+                smoothedLandmarks[i].z = SMOOTHING * smoothedLandmarks[i].z + (1 - SMOOTHING) * raw[i].z;
+            }
+            return smoothedLandmarks;
+        }
 
         function sendForPrediction() {
             const proc = document.createElement('canvas');
