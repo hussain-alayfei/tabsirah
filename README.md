@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Version](https://img.shields.io/badge/version-2.0-blue)
-![Python](https://img.shields.io/badge/python-3.10+-green)
+![Python](https://img.shields.io/badge/python-3.11-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
 **Learn and Memorize the Quran with Arabic Sign Language**
@@ -34,93 +34,104 @@ An AI-powered web application that provides real-time feedback on Arabic sign la
 - **Practice Errors**: Re-train only on failed verses
 
 ### 🤖 AI-Powered Detection
-- **MediaPipe Hand Tracking**: 21 landmark detection with 95%+ accuracy
-- **LightGBM Classifier**: Fast, accurate sign classification from hand landmarks
-- **Real-time Processing**: <50ms prediction latency
+- **MediaPipe Hand Tracking**: 21 landmark detection with GPU acceleration
+- **LightGBM Ensemble**: 3-model ensemble with engineered geometric features (~97.6% accuracy)
+- **EMA Smoothing**: Exponential moving average on landmarks for steady predictions
 - **30 Arabic Letters**: Complete Arabic alphabet + special combinations
 
 ### 🎨 Modern UI/UX
 - **Responsive Design**: Works on mobile, tablet, and desktop
-- **Beautiful Typography**: Amiri font for Quranic text, Cairo for UI
+- **Beautiful Typography**: Cairo for UI, Noto Naskh Arabic for Quranic text
 - **Smooth Animations**: Delightful user experience
 - **RTL Support**: Native right-to-left Arabic layout
-- **Brand Colors**: Professional color palette (Primary Blue, Light Cyan, Dark Navy)
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.11+
 - Webcam
 - Modern web browser
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/hussain-alayfei/tabsirah.git
 cd tabsirah
 
-# Create virtual environment
 python -m venv venv
-
-# Activate virtual environment
 # Windows:
 .\venv\Scripts\activate
 # macOS/Linux:
 source venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
 
-# Run the application
 cd web_app
 python app.py
 ```
 
-### Access the App
-Open your browser and navigate to:
-```
-http://127.0.0.1:5000
-```
+Open http://127.0.0.1:5000
 
 ---
 
 ## 📚 Documentation
 
-| Doc | Audience |
-|-----|----------|
-| **[AGENTS.md](AGENTS.md)** | **AI agents / maintainers** — Git, Render, production pitfalls |
-| [COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md) | Full technical reference |
-| [GIT_WORKFLOW.md](GIT_WORKFLOW.md) | Branching and commits |
-| [PRODUCTION_READY.md](PRODUCTION_READY.md) | Deploy checklist and live status |
+| Document | Description |
+|----------|-------------|
+| [AGENTS.md](AGENTS.md) | AI agent / maintainer guide — production pitfalls, deploy checklist |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, prediction pipeline, API reference |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Render deploy config, troubleshooting |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Dev setup, git workflow, code guidelines |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
 
-For complete technical documentation, see:
+---
 
-**[📖 COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md)**
+## 🛠️ Technology Stack
 
-This comprehensive guide covers:
-- 🏗️ **Architecture**: System design and data flow
-- 💻 **Technology Stack**: All frameworks and libraries
-- 🧠 **AI Model**: Training pipeline and data processing
-- 🎨 **Design System**: Colors, typography, components
-- 🔧 **Implementation**: Key features with code examples
-- 🐛 **Bug Fixes**: All improvements and corrections
-- 🚀 **Deployment**: Production deployment guides
-- 🔍 **Troubleshooting**: Common issues and solutions
+| Component | Technology |
+|-----------|------------|
+| **Backend** | Flask (Python) |
+| **Frontend** | HTML5, Tailwind CSS, JavaScript |
+| **AI/ML** | MediaPipe, LightGBM, Scikit-Learn, OpenCV |
+| **Hand Detection** | MediaPipe Hand Landmarker (browser WASM) |
+| **Classification** | LightGBM ensemble (`model_lightgbm.p`) |
+| **Fonts** | Cairo (UI), Noto Naskh Arabic (Quranic Text) |
+
+---
+
+## 📊 Project Structure
+
+```
+tabsirah/
+├── models/               # Trained AI models
+│   ├── hand_landmarker.task   # MediaPipe model
+│   └── model_lightgbm.p      # Production classifier (LightGBM ensemble)
+├── src/                  # Training scripts (not deployed)
+│   ├── 3_process_data.py
+│   └── 4_train_model.py
+├── web_app/              # Flask application
+│   ├── app.py            # Flask server & routes
+│   ├── inference_classifier.py  # LightGBM inference + feature engineering
+│   ├── constants.py      # Label mapping (single source of truth)
+│   ├── surah_data.py     # Quranic content
+│   ├── static/signs/     # Sign reference images
+│   └── templates/        # HTML templates
+├── tests/                # Test suite
+├── docs/                 # Technical documentation
+├── requirements.txt      # Production dependencies
+└── Procfile              # Render start command
+```
 
 ---
 
 ## 🎥 Demo
 
-### Home Screen
-Beautiful landing page with two learning modes:
-- 📖 Practice Reading (Visual Learning)
-- 📝 Practice Reciting (Memorization Test)
+**Live app**: https://tabsirah.onrender.com
 
 ### Training Interface
-- Camera feed with hand skeleton overlay
+- Camera feed with smoothed hand skeleton overlay
 - Reference sign cards (in Reading mode)
 - Real-time prediction badge
 - Progress tracking
@@ -133,117 +144,23 @@ Beautiful landing page with two learning modes:
 
 ---
 
-## 🛠️ Technology Stack
-
-| Component | Technology |
-|-----------|------------|
-| **Backend** | Flask (Python) |
-| **Frontend** | HTML5, Tailwind CSS, JavaScript |
-| **AI/ML** | MediaPipe, Scikit-Learn, OpenCV |
-| **Hand Detection** | MediaPipe Hand Landmarker |
-| **Classification** | LightGBM (`model_lightgbm.p`) |
-| **Fonts** | Cairo (UI), Amiri (Quranic Text) |
-
----
-
-## 📊 Project Structure
-
-```
-tabsirah/
-├── dataset/              # Training images (~6,000 images, 30 classes)
-├── data_processed/       # Processed features (pickle files)
-├── models/               # Trained AI models
-│   ├── hand_landmarker.task   # MediaPipe model
-│   ├── model_lightgbm.p       # Production classifier (LightGBM)
-│   └── model_arabic.p         # Legacy Random Forest (training script)
-├── src/                  # Data processing & training scripts
-│   ├── 3_process_data.py
-│   └── 4_train_model.py
-├── web_app/              # Main Flask application
-│   ├── app.py            # Flask server
-│   ├── inference_classifier.py  # AI inference
-│   ├── surah_data.py     # Quranic content
-│   ├── static/           # Sign images & assets
-│   └── templates/        # HTML templates
-├── requirements.txt      # Python dependencies
-└── README.md            # This file
-```
-
----
-
-## 🎯 Roadmap
-
-### Short-Term
-- [ ] Add 10 more surahs
-- [ ] User accounts & progress saving
-- [ ] Offline PWA mode
-- [ ] Accessibility improvements
-
-### Mid-Term
-- [ ] Mobile native apps (iOS/Android)
-- [ ] Advanced analytics dashboard
-- [ ] Gamification (badges, streaks)
-- [ ] Social features
-
-### Long-Term
-- [ ] Deep learning models (LSTM/Transformer)
-- [ ] Full Quran coverage (30 Juz')
-- [ ] Teacher dashboard
-- [ ] Video recording & review
-
----
-
 ## 🤝 Contributing
 
-We welcome contributions! Here's how:
-
-1. **Report Bugs**: Open an issue with reproduction steps
-2. **Suggest Features**: Share your ideas in feature requests
-3. **Submit Code**: 
-   - Fork the repo
-   - Create a feature branch
-   - Make your changes
-   - Submit a pull request
-
-See [COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md#15-contributing) for detailed guidelines.
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for development setup, git workflow, and code guidelines.
 
 ---
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
 ## 🙏 Credits
 
-### Datasets
-- Arabic Sign Language Dataset (Kaggle)
-
-### Libraries
-- MediaPipe by Google
-- Scikit-Learn
-- Flask
-- Tailwind CSS
-
-### Fonts
-- Cairo by Mohamed Gaber
-- Amiri by Khaled Hosny
-
----
-
-## 📞 Contact & Support
-
-- **Documentation**: [Complete Docs](COMPLETE_PROJECT_DOCUMENTATION.md)
-- **Live app**: https://tabsirah.onrender.com
-- **Issues**: [GitHub Issues](https://github.com/hussain-alayfei/tabsirah/issues)
-- **Email**: support@tabsirah.com
-
----
-
-## 🌟 Star History
-
-If you find this project useful, please consider giving it a star ⭐
+- **Datasets**: Arabic Sign Language Dataset (Kaggle)
+- **Libraries**: MediaPipe (Google), Scikit-Learn, Flask, LightGBM, Tailwind CSS
+- **Fonts**: Cairo by Mohamed Gaber, Noto Naskh Arabic by Google
 
 ---
 

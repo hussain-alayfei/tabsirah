@@ -2,7 +2,7 @@
 
 **Read this first** before changing code, deploying, or debugging production.
 
-**Last updated:** 2026-05-19  
+**Last updated:** 2026-05-22  
 **Production URL:** https://tabsirah.onrender.com  
 **GitHub:** https://github.com/hussain-alayfei/tabsirah
 
@@ -13,7 +13,7 @@
 | Item | Value |
 |------|--------|
 | **Stack** | Flask + Gunicorn, MediaPipe (browser + optional server), **LightGBM** classifier |
-| **Production model** | `models/model_lightgbm.p` (not `model_arabic.p`) |
+| **Production model** | `models/model_lightgbm.p` (3-model LightGBM ensemble, 62 features) |
 | **Python (Render)** | 3.11 (native runtime) |
 | **Python (local `.python-version`)** | 3.11.10 preferred |
 | **Deploy platform** | Render (Free tier) |
@@ -51,7 +51,7 @@ ef5082e  fix: add lightgbm to requirements for Render deployment
 1. **Do not commit** unless the user explicitly asks.
 2. **Never commit** API keys, `.env`, or `~/.cursor/mcp.json`.
 3. Production fixes → branch from `main` or commit directly to `main` only if user requests deploy.
-4. Feature work → `develop` → PR → `main` (see [GIT_WORKFLOW.md](GIT_WORKFLOW.md)).
+4. Feature work → `develop` → PR → `main` (see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)).
 5. After pushing to `main`, Render auto-deploys (if enabled).
 
 ---
@@ -134,8 +134,8 @@ Present for server MediaPipe; **not required** if client-landmarks path works.
 
 ### 3. Documentation drift
 
-- README still mentioned Random Forest / `model_arabic.p` — **production uses LightGBM / `model_lightgbm.p`**.
-- `src/4_train_model.py` still trains Random Forest — retraining docs are legacy unless updated.
+- `src/4_train_model.py` still trains Random Forest — production model was trained via Kaggle notebook with LightGBM.
+- All docs updated 2026-05-22 to reflect current LightGBM ensemble pipeline.
 
 ---
 
@@ -144,8 +144,9 @@ Present for server MediaPipe; **not required** if client-landmarks path works.
 | File | Role |
 |------|------|
 | `web_app/app.py` | Flask routes; `/predict` accepts `{ image, landmarks? }` |
-| `web_app/inference_classifier.py` | LightGBM + optional server MediaPipe; `classify_landmarks()` |
-| `web_app/templates/index.html` | Client MediaPipe; sends `lastClientLandmarks` with each predict |
+| `web_app/inference_classifier.py` | LightGBM ensemble + engineer_features + optional server MediaPipe |
+| `web_app/constants.py` | **Single source of truth** for LABELS mapping (30 classes) |
+| `web_app/templates/index.html` | Client MediaPipe + EMA smoothing; sends landmarks with each predict |
 | `web_app/surah_data.py` | Surah content; only **Al-Kawthar** fully unlocked |
 | `Procfile` | Render start command |
 | `requirements.txt` | Must include `lightgbm` |
@@ -189,7 +190,7 @@ Service ID: `srv-d5nge0khg0os73df7qcg`
 ## Related docs
 
 - [README.md](README.md) — user-facing overview  
-- [COMPLETE_PROJECT_DOCUMENTATION.md](COMPLETE_PROJECT_DOCUMENTATION.md) — deep technical reference (partially outdated on model type)  
-- [GIT_WORKFLOW.md](GIT_WORKFLOW.md) — branching  
-- [PRODUCTION_READY.md](PRODUCTION_READY.md) — checklist + current deploy snapshot  
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design, prediction pipeline, API  
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — Render deploy, troubleshooting  
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) — dev setup, git workflow  
 - [CHANGELOG.md](CHANGELOG.md) — version history  

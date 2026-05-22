@@ -44,7 +44,6 @@ desktop.ini
 
 # Dataset (too large for Git - keep models, exclude raw images)
 dataset/Lettres_sign_ar/
-dataset/*.csv
 
 # Processed data (can be regenerated)
 data_processed/
@@ -53,20 +52,10 @@ data_processed/
 *.log
 logs/
 
-# Development scripts (not needed for production)
-src/1_download_data.py
-src/2_verify_mapping.py
-src/5_update_app.py
-src/sync_images.py
-copy_signs.py
-verify_images.py
-*.bat
-
 # Temporary files
 *.tmp
 *.temp
 *.bak
-*.swp
 
 # Environment variables
 .env
@@ -86,6 +75,11 @@ coverage.xml
 .pytest_cache/
 .tox/
 
-# NOTE: models/ folder is NOT ignored - it's needed for deployment
+# Large model files (>100 MB — GitHub rejects these)
+models/lightgbm_improved.p
+
+# Cursor IDE
+.cursor/
+
+# NOTE: models/model_lightgbm.p IS committed (~63 MB) — Render needs it
 # NOTE: web_app/static/signs/ is NOT ignored - sign images are needed
-# NOTE: Keep src/3_process_data.py and src/4_train_model.py for retraining
