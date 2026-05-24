@@ -763,7 +763,7 @@
         // Game Props
         let lastVideoTime = -1;
         let lastPredictionTime = 0;
-        const PREDICTION_INTERVAL = 150;
+        const PREDICTION_INTERVAL = 300; // ms between server predictions (tuned for Render 0.1 CPU)
 
         let targetSentence = "";
         let currentTargetIndex = 0;
@@ -1605,6 +1605,8 @@
             const payload = { image: u };
             if (lastClientLandmarks && lastClientLandmarks.length >= 21) {
                 payload.landmarks = lastClientLandmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z }));
+                payload.width  = video.videoWidth;
+                payload.height = video.videoHeight;
             }
 
             fetch('/predict', {

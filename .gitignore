@@ -77,6 +77,8 @@ coverage.xml
 
 # Large model files (>100 MB — GitHub rejects these)
 models/lightgbm_improved.p
+models/model_lightgbm_old.p
+bench_inference.py
 
 # Cursor IDE
 .cursor/

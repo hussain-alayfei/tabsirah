@@ -6,6 +6,7 @@ import os
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from constants import LABELS
+from features import hand_to_features
 
 
 def engineer_features(X):
@@ -56,10 +57,12 @@ class SignLanguageClassifier:
         if isinstance(obj, dict) and 'model' in obj:
             model = obj['model']
             self.use_engineered = obj.get('use_engineered', False)
+            self.feature_pipeline = obj.get('feature_pipeline', 'legacy')
         else:
             # Raw estimator (e.g. old model_arabic.p style)
             model = obj
             self.use_engineered = False
+            self.feature_pipeline = 'legacy'
 
         # Normalize into a list of models
         if isinstance(model, (list, tuple)):
@@ -71,7 +74,8 @@ class SignLanguageClassifier:
 
         print(f"[inference] Loaded {len(self.models)} model(s), "
               f"use_engineered={self.use_engineered}, "
-              f"n_features_expected={self.n_features_expected}")
+              f"n_features_expected={self.n_features_expected}, "
+              f"feature_pipeline={self.feature_pipeline}")
 
         # --- HandLandmarker (optional; fails on Render headless) ---
         self.detector = None
@@ -101,35 +105,47 @@ class SignLanguageClassifier:
             data_aux.append(y - min_y)
         return data_aux
 
-    def _predict_label(self, data_aux):
-        """data_aux: list/array of 42 raw features. Returns Arabic label str or None."""
-        X = np.asarray(data_aux, dtype=np.float32).reshape(1, -1)   # (1, 42)
-        if self.use_engineered:
-            X = engineer_features(X)                                # (1, 62)
+    def _run_models(self, X):
+        """Run ensemble on a ready feature matrix. Returns Arabic label or None."""
         if X.shape[1] != self.n_features_expected:
-            # log loudly, do not silently fail
             print(f"[inference] feature mismatch: got {X.shape[1]}, "
                   f"model expects {self.n_features_expected}")
             return None
-        # average predict_proba across the ensemble (works for a single model too)
         proba = None
         for m in self.models:
             p = m.predict_proba(X)
             proba = p if proba is None else proba + p
         proba /= len(self.models)
         idx = int(np.argmax(proba, axis=1)[0])
-        class_id = int(self.models[0].classes_[idx])   # map proba column -> real class id
+        class_id = int(self.models[0].classes_[idx])
         return self.labels_dict.get(class_id)
 
-    def classify_landmarks(self, landmarks):
-        """Classify from client MediaPipe landmarks [{x,y,z}, ...] (21 points)."""
+    def _predict_label(self, data_aux):
+        """data_aux: list/array of 42 raw features. Returns Arabic label str or None."""
+        X = np.asarray(data_aux, dtype=np.float32).reshape(1, -1)   # (1, 42)
+        if self.use_engineered:
+            X = engineer_features(X)                                # (1, 62)
+        return self._run_models(X)
+
+    def classify_landmarks(self, landmarks, width=None, height=None):
+        """Classify from client MediaPipe landmarks [{x,y,z}, ...] (21 points).
+        
+        For CHFN models, width and height of the source video frame are required.
+        For legacy models, they are ignored.
+        """
         if not landmarks or len(landmarks) < 21:
             return None
-        x_ = [float(lm['x']) for lm in landmarks]
-        y_ = [float(lm['y']) for lm in landmarks]
-        data_aux = self._features_from_points(x_, y_)
         try:
-            return self._predict_label(data_aux)
+            if self.feature_pipeline == 'chfn_v1':
+                if not width or not height:
+                    print("[inference] CHFN model needs width/height from client")
+                    return None
+                xy = [(float(lm['x']), float(lm['y'])) for lm in landmarks]
+                return self._run_models(hand_to_features(xy, width, height).reshape(1, -1))
+            # Legacy path
+            x_ = [float(lm['x']) for lm in landmarks]
+            y_ = [float(lm['y']) for lm in landmarks]
+            return self._predict_label(self._features_from_points(x_, y_))
         except Exception as e:
             print(f"[inference] predict error in classify_landmarks: {e}")
             return None
@@ -144,13 +160,18 @@ class SignLanguageClassifier:
         prediction_label = None
         
         if detection_result.hand_landmarks:
-            hand_landmarks = detection_result.hand_landmarks[0]
-            x_ = [landmark.x for landmark in hand_landmarks]
-            y_ = [landmark.y for landmark in hand_landmarks]
-            data_aux = self._features_from_points(x_, y_)
-
+            hand = detection_result.hand_landmarks[0]
             try:
-                prediction_label = self._predict_label(data_aux)
+                if self.feature_pipeline == 'chfn_v1':
+                    H, W = frame_rgb.shape[:2]
+                    xy = [(lm.x, lm.y) for lm in hand]
+                    prediction_label = self._run_models(
+                        hand_to_features(xy, W, H).reshape(1, -1))
+                else:
+                    x_ = [lm.x for lm in hand]
+                    y_ = [lm.y for lm in hand]
+                    data_aux = self._features_from_points(x_, y_)
+                    prediction_label = self._predict_label(data_aux)
             except Exception as e:
                 print(f"[inference] predict error in predict: {e}")
                 

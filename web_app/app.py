@@ -145,7 +145,9 @@ def predict():
 
         client_landmarks = json_data.get('landmarks')
         if client_landmarks and len(client_landmarks) >= 21:
-            label = classifier.classify_landmarks(client_landmarks)
+            width  = json_data.get('width')
+            height = json_data.get('height')
+            label = classifier.classify_landmarks(client_landmarks, width, height)
             detection_result = None
         else:
             label, detection_result = classifier.predict(frame_rgb)
